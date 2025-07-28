@@ -3,11 +3,12 @@ import FileUpload from '../components/FileUpload';
 import CompletedCourses from '../components/CompletedCourses';
 import DataTable from '../components/DataTable';
 import { Typography, Box, TextField, Button } from '@mui/material';
-import type { WatchTimeData } from '../types';
+import { useData } from '../context/DataContext'; // Ajuste o caminho se necessário
 import { useNavigate } from 'react-router-dom';
+import type { WatchTimeData } from '../types'; // Alterado para import type
 
 const Dashboard: React.FC = () => {
-  const [data, setData] = useState<WatchTimeData[]>([]);
+  const { data, setData } = useData();
   const [filteredData, setFilteredData] = useState<WatchTimeData[]>([]);
   const [inputEmail, setInputEmail] = useState<string>('');
   const [isUploaded, setIsUploaded] = useState<boolean>(false);
@@ -15,7 +16,7 @@ const Dashboard: React.FC = () => {
 
   const handleFileUpload = (uploadedData: WatchTimeData[]) => {
     if (uploadedData.length === 0) return;
-    setData(uploadedData); // Substitui os dados existentes, evitando acumulação
+    setData(uploadedData); // Atualiza o estado global
     setFilteredData(uploadedData); // Inicializa com todos os dados
     setIsUploaded(true);
   };

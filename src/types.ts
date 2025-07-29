@@ -1,14 +1,27 @@
-// src/types.ts ou src/utils/constants.ts
+// src/types.ts
 export interface WatchTimeData {
+  id: string; // Adicionado com base no cabeçalho do CSV
   user_email: string;
+  user_full_name: string; // Adicionado com base no cabeçalho do CSV
+  lesson_name: string; // Adicionado com base no cabeçalho do CSV
   course_name: string;
-  completed: string; // 'true' ou 'false'
+  video_name: string; // Adicionado com base no cabeçalho do CSV
+  total_duration: string; // Manter como string devido ao formato de tempo
+  completed: string; // 'true' ou 'false' (já ajustamos para toLowerCase() no Gestao.tsx)
   completed_date: string | null; // Data de conclusão, pode ser null
-  AGS: string; // Agente de Sucesso
-  [key: string]: any; // Para campos adicionais dinâmicos, se houver
+  until_completed_duration: string; // Adicionado com base no cabeçalho do CSV, manter como string
+  created_at: string; // Adicionado com base no cabeçalho do CSV
+  updated_at: string; // Adicionado com base no cabeçalho do CSV
+  export_date: string; // Adicionado com base no cabeçalho do CSV
+  registration_code: string; // Adicionado com base no cabeçalho do CSV
+  status: string; // Adicionado com base no cabeçalho do CSV
+  ags: string; // AGORA CORRIGIDO PARA ags (minúsculas) para corresponder ao CSV
 }
 
-// Totais predefinidos de aulas por disciplina
+// Estes provavelmente deveriam estar em src/utils/constants.ts se forem usados em múltiplos locais.
+// Verifique onde você tem predefinedTotals e courseNameMappings definidos para evitar duplicidade.
+// Caso estejam aqui, mantenha-os. Caso contrário, remova-os e garanta que são importados de constants.ts.
+
 export const predefinedTotals: { [key: string]: number } = {
   "Banco de Dados Relacional": 35,
   "Teste de Software Para Web": 22,
@@ -21,7 +34,7 @@ export const predefinedTotals: { [key: string]: number } = {
   "Desenvolvimento de Interfaces Web Frameworks Front-End": 36,
   "Desenvolvimento de websites com mentalidade ágil": 34,
   "Fundamentos de Interface": 33,
-  "Programação Intermediária com Python": 42,
+  "Programação Intermediária com Python - Python II": 42,
   "Programação Orientada a Objetos": 39,
   "JavaScript": 35,
   "Linux": 38,
@@ -32,3 +45,12 @@ export const predefinedTotals: { [key: string]: number } = {
   "Projetos II": 16,
   "Programação Básica com Python": 59
 };
+// Note: courseNameMappings não está no snippet do seu types.ts, mas foi mencionado em constants.ts.
+// Se ele estiver em constants.ts, mantenha-o lá e importe de lá.
+/*
+export const courseNameMappings: { [key: string]: string } = {
+  "Banco de Dados": "Banco de Dados Relacional",
+  "Programação Intermediária com Python": "Programação Intermediária com Python - Python II",
+  // Adicione outros mapeamentos conforme necessário
+};
+*/

@@ -15,7 +15,7 @@ const predefinedTotals: { [key: string]: number } = {
   "Desenvolvimento de Interfaces Web Frameworks Front-End": 36,
   "Desenvolvimento de websites com mentalidade ágil": 34,
   "Fundamentos de Interface": 33,
-  "Programação Intermediária com Python": 42,
+  "Programação Intermediária com Python - Python II": 42,
   "Programação Orientada a Objetos": 39,
   "JavaScript": 35,
   "Linux": 38,

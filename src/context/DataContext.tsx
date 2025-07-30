@@ -4,15 +4,19 @@ import type { WatchTimeData } from '../types';
 interface DataContextType {
   data: WatchTimeData[];
   setData: React.Dispatch<React.SetStateAction<WatchTimeData[]>>;
+  isDataLoaded: boolean; // Adicione esta linha
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<WatchTimeData[]>([]);
+  
+  // Verificamos se há dados para saber se foi carregado
+  const isDataLoaded = data.length > 0;
 
   return (
-    <DataContext.Provider value={{ data, setData }}>
+    <DataContext.Provider value={{ data, setData, isDataLoaded }}>
       {children}
     </DataContext.Provider>
   );

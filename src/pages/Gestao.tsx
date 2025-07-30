@@ -4,9 +4,9 @@ import { Typography, Box, Button, Table, TableBody, TableCell, TableHead, TableR
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useData } from '../context/DataContext';
 import { predefinedTotals, courseNameMappings } from '../utils/constants'; 
-import { useNavigate } from 'react-router-dom'; // Importe useNavigate
+import { useNavigate } from 'react-router-dom'; 
 
-// Dashboard Componente
+
 const Dashboard = ({ data }: { data: { agent: string; concludedStudents: number; }[] }) => {
   if (!data || data.length === 0) {
     return <Typography variant="h6">Nenhum dado disponível para o dashboard.</Typography>;
@@ -45,7 +45,7 @@ const Gestao: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [agents, setAgents] = useState<string[]>([]);
   const [dashboardData, setDashboardData] = useState<any[]>([]);
-  const navigate = useNavigate(); // Inicialize o hook useNavigate
+  const navigate = useNavigate(); 
 
   // Define os módulos e suas disciplinas
   const modules = {
@@ -78,7 +78,7 @@ const Gestao: React.FC = () => {
     ],
     "Projetos e Outros": [ // Módulo para disciplinas que não se encaixam nos 4 principais
       "Projetos II",
-      "Tutorial Plataforma" // Exemplo, adicione outras se necessário
+      "Tutorial Plataforma" 
     ]
   };
 
@@ -111,7 +111,7 @@ const Gestao: React.FC = () => {
     const agentData = data.filter(item => item.ags === agent && item.completed_date);
     const counts: { [key: string]: number } = {};
 
-    // Usamos a lista 'disciplines' (plana) aqui para garantir que todas as disciplinas sejam processadas
+   
     disciplines.forEach(discipline => { 
       const normalizedDiscipline = courseNameMappings[discipline] || discipline;
       const totalLessons = predefinedTotals[normalizedDiscipline] || 0;
@@ -148,7 +148,7 @@ const Gestao: React.FC = () => {
     return counts;
   };
   
-  // Efeito para calcular os dados do dashboard quando os dados mudam
+  
   useEffect(() => {
     const newDashboardData = agents.map(agent => {
       const completionCounts = getCompletionCounts(agent);
@@ -184,11 +184,11 @@ const Gestao: React.FC = () => {
               {agent}
             </Button>
           ))}
-          {/* Botão para voltar à página principal do Dashboard (rota '/') */}
+          
           <Button
             variant="contained"
-            sx={{ mt: 2, ml: 1 }} // Margem superior e esquerda para separar
-            onClick={() => navigate('/')} // Ação para navegar para a rota raiz
+            sx={{ mt: 2, ml: 1 }} 
+            onClick={() => navigate('/')} 
           >
             Voltar ao Dashboard Principal
           </Button>
@@ -198,15 +198,15 @@ const Gestao: React.FC = () => {
           <Button
             variant="outlined"
             sx={{ mb: 2 }}
-            onClick={() => setSelectedAgent(null)} // Este botão volta para a lista de agentes na Gestão
+            onClick={() => setSelectedAgent(null)} 
           >
             Voltar à Lista de Agentes
           </Button>
-          {/* Botão para voltar à página principal do Dashboard (rota '/') */}
+          
           <Button
             variant="contained"
-            sx={{ mb: 2, ml: 1 }} // Margem para separar do outro botão
-            onClick={() => navigate('/')} // Ação para navegar para a rota raiz
+            sx={{ mb: 2, ml: 1 }} 
+            onClick={() => navigate('/')} 
           >
             Voltar ao Dashboard Principal
           </Button>
@@ -214,7 +214,7 @@ const Gestao: React.FC = () => {
           
           {/* Loop para exibir os módulos */}
           {Object.entries(modules).map(([moduleName, moduleDisciplines]) => (
-            <Paper key={moduleName} sx={{ mb: 3, p: 2 }}> {/* Usando Paper para a box com sombra */}
+            <Paper key={moduleName} sx={{ mb: 3, p: 2 }}> 
               <Typography variant="h6" gutterBottom color="primary">
                 {moduleName}
               </Typography>
@@ -222,7 +222,7 @@ const Gestao: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Disciplina</TableCell>
-                    {/* Alinhamento e largura para o cabeçalho */}
+                    
                     <TableCell align="right" sx={{ width: '120px' }}>Alunos Concluídos</TableCell> 
                   </TableRow>
                 </TableHead>
@@ -232,7 +232,7 @@ const Gestao: React.FC = () => {
                     return (
                       <TableRow key={discipline}>
                         <TableCell>{discipline}</TableCell>
-                        {/* Alinhamento e largura para as células de dados */}
+                        
                         <TableCell align="right" sx={{ width: '120px' }}>{count}</TableCell> 
                       </TableRow>
                     );

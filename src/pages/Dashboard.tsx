@@ -122,7 +122,6 @@ const Dashboard: React.FC = () => {
             <Typography>Carregando CSV padrão...</Typography>
         </Box>
       ) : showFileUploadInput ? (
-        // Chamada correta do FileUpload com a prop 'onFileUpload'
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
             <FileUpload onFileUpload={handleFileUpload} /> 
         </Box>
@@ -139,7 +138,7 @@ const Dashboard: React.FC = () => {
           </Button>
           <Button
             variant="outlined"
-            color="secondary"
+            color="primary" // Alterado de "secondary" para "primary"
             onClick={() => setShowFileUploadInput(true)}
             sx={{ width: '250px' }}
           >

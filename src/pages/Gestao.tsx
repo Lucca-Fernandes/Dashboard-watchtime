@@ -1,13 +1,32 @@
-// src/Gestao.tsx
-import React, { useState, useEffect } from 'react';
-import { Typography, Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Paper } from '@mui/material';
+// src/pages/Gestao.tsx
+import React, { useState, useMemo } from 'react';
+import {
+  Typography, Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Paper,
+  CircularProgress, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText
+} from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useData } from '../context/DataContext';
-import { predefinedTotals, courseNameMappings } from '../utils/constants'; 
-import { useNavigate } from 'react-router-dom'; 
+import { predefinedTotals, courseNameMappings } from '../utils/constants';
+import { useNavigate } from 'react-router-dom';
+import { timeToSeconds } from '../utils/timeUtils';
+import type { WatchTimeData } from '../types'; // Import WatchTimeData type
 
+// Definindo tipos para o novo formato de dados de conclusão por disciplina
+type DisciplineCompletionDetail = {
+  count: number;
+  students: string[];
+};
 
-const Dashboard = ({ data }: { data: { agent: string; concludedStudents: number; }[] }) => {
+type AgentCompletionResults = {
+  [discipline: string]: DisciplineCompletionDetail;
+};
+
+// New type for pre-processed agent data
+type PreProcessedAgentData = {
+  [agentEmail: string]: AgentCompletionResults;
+};
+
+const DashboardChart = ({ data }: { data: { agent: string; concludedStudents: number; }[] }) => { // Renamed to avoid conflict
   if (!data || data.length === 0) {
     return <Typography variant="h6">Nenhum dado disponível para o dashboard.</Typography>;
   }
@@ -32,7 +51,7 @@ const Dashboard = ({ data }: { data: { agent: string; concludedStudents: number;
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="concludedStudents" fill="#8884d8" name="Alunos Concluídos" />
+          <Bar dataKey="concludedStudents" fill="#5231ef" name="Alunos Concluídos" />
         </BarChart>
       </ResponsiveContainer>
     </Box>
@@ -41,14 +60,12 @@ const Dashboard = ({ data }: { data: { agent: string; concludedStudents: number;
 
 
 const Gestao: React.FC = () => {
-  const { data } = useData();
+  const { data: allWatchTimeData, isDataLoaded } = useData();
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
-  const [agents, setAgents] = useState<string[]>([]);
-  const [dashboardData, setDashboardData] = useState<any[]>([]);
-  const navigate = useNavigate(); 
+  const [openDisciplineStudents, setOpenDisciplineStudents] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // Define os módulos e suas disciplinas
-  const modules = {
+  const modules = useMemo(() => ({
     "Módulo 1: Fundamentos": [
       "Scratch",
       "No Code",
@@ -59,7 +76,7 @@ const Gestao: React.FC = () => {
     "Módulo 2: Backend e Dados": [
       "JavaScript",
       "Programação Orientada a Objetos",
-      "Programação Intermediária com Python - Python II", 
+      "Programação Intermediária com Python - Python II",
       "Banco de Dados Relacional"
     ],
     "Módulo 3: Frontend e Mobile": [
@@ -76,17 +93,15 @@ const Gestao: React.FC = () => {
       "Desenvolvimento de APIs RESTful",
       "Teste de Software Para Web"
     ],
-    "Projetos e Outros": [ // Módulo para disciplinas que não se encaixam nos 4 principais
+    "Projetos e Outros": [
       "Projetos II",
-      "Tutorial Plataforma" 
+      "Tutorial Plataforma"
     ]
-  };
+  }), []); // Memoize modules as well
 
-  // Gera uma lista plana de todas as disciplinas para uso em getCompletionCounts
-  const disciplines = Object.values(modules).flat();
+  const disciplines = useMemo(() => Object.values(modules).flat(), [modules]);
 
-  // Lista de e-mails de agentes a serem removidos
-  const removedAgents = [
+  const removedAgents = useMemo(() => ([
     "gabrielrodrigues@projetodesenvolve.com.br",
     "lucca@projetodesenvolve.com.br",
     "esther@projetodesenvolve.com.br",
@@ -97,70 +112,126 @@ const Gestao: React.FC = () => {
     "jhulybastos@projetodesenvolve.com.br",
     "larissafelipe@projetodesenvolve.com.br",
     "gustavo.vieira@projetodesenvolve.com.br"
-  ];
+  ]), []);
 
-  // Extrai os agentes únicos do CSV e remove os agentes desativados
-  useEffect(() => {
-    const uniqueAgents = [...new Set(data.map(item => item.ags).filter(ags => ags))];
-    const filteredAgents = uniqueAgents.filter(agent => !removedAgents.includes(agent));
-    setAgents(filteredAgents);
-  }, [data]);
+  const agents = useMemo(() => {
+    if (!allWatchTimeData || allWatchTimeData.length === 0) return [];
+    const uniqueAgents = [...new Set(allWatchTimeData.map(item => item.ags).filter(ags => ags))];
+    return uniqueAgents.filter(agent => !removedAgents.includes(agent));
+  }, [allWatchTimeData, removedAgents]);
 
-  // Calcula o número de alunos únicos que concluíram pelo menos 80% de uma disciplina
-  const getCompletionCounts = (agent: string) => {
-    const agentData = data.filter(item => item.ags === agent && item.completed_date);
-    const counts: { [key: string]: number } = {};
+  // Pre-process all completion details once when data loads
+  const preProcessedAgentCompletionData: PreProcessedAgentData | null = useMemo(() => {
+    if (!isDataLoaded || allWatchTimeData.length === 0 || agents.length === 0) {
+      return null;
+    }
 
-   
-    disciplines.forEach(discipline => { 
-      const normalizedDiscipline = courseNameMappings[discipline] || discipline;
-      const totalLessons = predefinedTotals[normalizedDiscipline] || 0;
+    const allAgentResults: PreProcessedAgentData = {};
 
-      if (totalLessons > 0) {
-        const studentProgress: { [email: string]: Set<string> } = {};
-
-        const disciplineSpecificAgentData = agentData.filter(item => {
-            const itemNormalizedCourseName = courseNameMappings[item.course_name] || item.course_name;
-            const isCompletedTrue = item.completed?.toLowerCase() === 'true'; 
-            return itemNormalizedCourseName === normalizedDiscipline && isCompletedTrue;
-        });
-
-        disciplineSpecificAgentData.forEach(item => {
-            if (!studentProgress[item.user_email]) {
-              studentProgress[item.user_email] = new Set();
-            }
-            studentProgress[item.user_email].add(item.id); 
-        });
-
-        const completedStudents = Object.keys(studentProgress)
-          .filter(email => {
-            const lessonsWatchedCount = studentProgress[email].size; 
-            const completionRate = lessonsWatchedCount / totalLessons;
-            return completionRate >= 0.8; 
-          });
-
-        counts[discipline] = [...new Set(completedStudents)].length; 
-      } else {
-        counts[discipline] = 0; 
+    // Group data by agent and then by discipline
+    const groupedByAgent: { [agent: string]: WatchTimeData[] } = {};
+    allWatchTimeData.forEach(item => {
+      if (item.ags && agents.includes(item.ags)) { // Only include relevant agents
+        if (!groupedByAgent[item.ags]) {
+          groupedByAgent[item.ags] = [];
+        }
+        groupedByAgent[item.ags].push(item);
       }
     });
 
-    return counts;
-  };
-  
-  
-  useEffect(() => {
+    agents.forEach(agent => {
+      const agentResults: AgentCompletionResults = {};
+      const agentData = groupedByAgent[agent] || [];
+
+      // Group agent's data by normalized discipline
+      const groupedByDiscipline: { [normalizedDiscipline: string]: WatchTimeData[] } = {};
+      agentData.forEach(item => {
+        const normalizedDiscipline = courseNameMappings[item.course_name] || item.course_name;
+        if (!groupedByDiscipline[normalizedDiscipline]) {
+          groupedByDiscipline[normalizedDiscipline] = [];
+        }
+        groupedByDiscipline[normalizedDiscipline].push(item);
+      });
+
+      disciplines.forEach((discipline: string) => {
+        const normalizedDiscipline = courseNameMappings[discipline] || discipline;
+        const totalLessons = predefinedTotals[normalizedDiscipline] || 0;
+
+        if (totalLessons > 0) {
+          const studentProgress: { [email: string]: Set<string> } = {};
+
+          const disciplineSpecificAgentData = groupedByDiscipline[normalizedDiscipline] || [];
+
+          disciplineSpecificAgentData.forEach(item => {
+            const videoTotalSeconds = timeToSeconds(item.video_total_duration);
+            const totalSecondsWatched = timeToSeconds(item.total_duration);
+
+            const isLessonCompletedByDuration =
+              videoTotalSeconds > 0 &&
+              totalSecondsWatched >= (videoTotalSeconds * 0.8);
+
+            if (isLessonCompletedByDuration) {
+              if (!studentProgress[item.user_email]) {
+                studentProgress[item.user_email] = new Set();
+              }
+              studentProgress[item.user_email].add(item.id);
+            }
+          });
+
+          const completedStudents = Object.keys(studentProgress)
+            .filter(email => {
+              const lessonsWatchedCount = studentProgress[email].size;
+              const completionRate = lessonsWatchedCount / totalLessons;
+              return completionRate >= 0.8;
+            });
+
+          agentResults[discipline] = {
+            count: completedStudents.length,
+            students: completedStudents,
+          };
+        } else {
+          agentResults[discipline] = {
+            count: 0,
+            students: [],
+          };
+        }
+      });
+      allAgentResults[agent] = agentResults;
+    });
+    return allAgentResults;
+  }, [allWatchTimeData, agents, disciplines, predefinedTotals, courseNameMappings, isDataLoaded]);
+
+
+  const dashboardData = useMemo(() => {
+    if (!preProcessedAgentCompletionData) return [];
     const newDashboardData = agents.map(agent => {
-      const completionCounts = getCompletionCounts(agent);
-      const totalConcluded = Object.values(completionCounts).reduce((sum, count) => sum + count, 0);
+      const completionDetails = preProcessedAgentCompletionData[agent];
+      const totalConcluded = Object.values(completionDetails).reduce((sum, detail) => sum + detail.count, 0);
       return {
-        agent: agent.split('@')[0], 
+        agent: agent.split('@')[0],
         concludedStudents: totalConcluded
       };
     });
-    setDashboardData(newDashboardData);
-  }, [agents]);
+    newDashboardData.sort((a, b) => b.concludedStudents - a.concludedStudents);
+    return newDashboardData;
+  }, [agents, preProcessedAgentCompletionData]);
 
+  const handleBackToDashboard = () => {
+    navigate('/');
+  };
+
+  const handleDisciplineClick = (disciplineName: string) => {
+    setOpenDisciplineStudents(prev => (prev === disciplineName ? null : disciplineName));
+  };
+
+  if (!isDataLoaded || !preProcessedAgentCompletionData) { // Also check for preProcessedAgentCompletionData
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 4 }}>
+        <CircularProgress sx={{ mb: 2 }} />
+        <Typography>Carregando dados de gestão...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 4 }}>
@@ -168,27 +239,28 @@ const Gestao: React.FC = () => {
         Gestão de Agentes de Sucesso
       </Typography>
 
-      <Dashboard data={dashboardData} />
+      <DashboardChart data={dashboardData} /> {/* Use the renamed component */}
 
-      {/* Condição para exibir a lista de agentes OU a visão detalhada do agente */}
       {!selectedAgent ? (
-        <Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography variant="h6">Selecione um Agente:</Typography>
-          {agents.map(agent => (
-            <Button
-              key={agent}
-              variant="outlined"
-              sx={{ m: 1 }}
-              onClick={() => setSelectedAgent(agent)}
-            >
-              {agent}
-            </Button>
-          ))}
-          
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {dashboardData.map(agentData => (
+              <Button
+                key={agentData.agent}
+                variant="outlined"
+                sx={{ m: 0.5 }}
+                onClick={() => setSelectedAgent(agentData.agent + "@projetodesenvolve.com.br")}
+              >
+                {agentData.agent}
+              </Button>
+            ))}
+          </Box>
+
           <Button
             variant="contained"
-            sx={{ mt: 2, ml: 1 }} 
-            onClick={() => navigate('/')} 
+            sx={{ mt: 2, ml: 1, alignSelf: 'flex-start' }}
+            onClick={handleBackToDashboard}
           >
             Voltar ao Dashboard Principal
           </Button>
@@ -198,23 +270,22 @@ const Gestao: React.FC = () => {
           <Button
             variant="outlined"
             sx={{ mb: 2 }}
-            onClick={() => setSelectedAgent(null)} 
+            onClick={() => setSelectedAgent(null)}
           >
             Voltar à Lista de Agentes
           </Button>
-          
+
           <Button
             variant="contained"
-            sx={{ mb: 2, ml: 1 }} 
-            onClick={() => navigate('/')} 
+            sx={{ mb: 2, ml: 1 }}
+            onClick={handleBackToDashboard}
           >
             Voltar ao Dashboard Principal
           </Button>
           <Typography variant="h6">Disciplinas concluídas pelos alunos do agente de sucesso {selectedAgent}</Typography>
-          
-          {/* Loop para exibir os módulos */}
+
           {Object.entries(modules).map(([moduleName, moduleDisciplines]) => (
-            <Paper key={moduleName} sx={{ mb: 3, p: 2 }}> 
+            <Paper key={moduleName} sx={{ mb: 3, p: 2 }}>
               <Typography variant="h6" gutterBottom color="primary">
                 {moduleName}
               </Typography>
@@ -222,18 +293,25 @@ const Gestao: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Disciplina</TableCell>
-                    
-                    <TableCell align="right" sx={{ width: '120px' }}>Alunos Concluídos</TableCell> 
+                    <TableCell align="right" sx={{ width: '120px' }}>Alunos Concluídos</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {moduleDisciplines.map(discipline => {
-                    const count = getCompletionCounts(selectedAgent)[discipline];
+                  {moduleDisciplines.map((discipline: string) => {
+                    // Access pre-calculated data
+                    const disciplineDetails = preProcessedAgentCompletionData[selectedAgent]?.[discipline];
+                    const count = disciplineDetails ? disciplineDetails.count : 0;
+
                     return (
                       <TableRow key={discipline}>
                         <TableCell>{discipline}</TableCell>
-                        
-                        <TableCell align="right" sx={{ width: '120px' }}>{count}</TableCell> 
+                        <TableCell
+                          align="right"
+                          sx={{ width: '120px', cursor: 'pointer', textDecoration: 'underline' }}
+                          onClick={() => handleDisciplineClick(discipline)}
+                        >
+                          {count}
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -242,6 +320,30 @@ const Gestao: React.FC = () => {
             </Paper>
           ))}
         </Box>
+      )}
+
+      {selectedAgent && openDisciplineStudents && (
+        <Dialog
+          open
+          onClose={() => setOpenDisciplineStudents(null)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Alunos Concluídos em "{openDisciplineStudents}"</DialogTitle>
+          <DialogContent dividers>
+            <List dense>
+              {preProcessedAgentCompletionData[selectedAgent]?.[openDisciplineStudents]?.students.length > 0 ? (
+                preProcessedAgentCompletionData[selectedAgent][openDisciplineStudents]?.students.map((studentEmail, index) => (
+                  <ListItem key={index} sx={{ py: 0.5 }}>
+                    <ListItemText primary={studentEmail} />
+                  </ListItem>
+                ))
+              ) : (
+                <Typography sx={{ p: 2 }}>Nenhum aluno encontrado para esta disciplina.</Typography>
+              )}
+            </List>
+          </DialogContent>
+        </Dialog>
       )}
     </Box>
   );

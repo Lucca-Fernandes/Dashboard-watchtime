@@ -1,3 +1,4 @@
+// src/components/DataTable.tsx
 import React, { useState } from 'react';
 import {
   Table,
@@ -46,8 +47,9 @@ const DataTable: React.FC<DataTableProps> = ({ data }) => {
               <TableCell>Nome da Aula</TableCell>
               <TableCell>Nome do Curso</TableCell>
               <TableCell>Nome do Vídeo</TableCell>
-              <TableCell>Duração Total</TableCell>
-              <TableCell>Tempo Consumido</TableCell>
+              <TableCell>Tempo Consumido</TableCell> {/* Renomeado para clareza */}
+              <TableCell>Duração até Conclusão</TableCell> {/* Renomeado para clareza */}
+              <TableCell>Duração Total do Vídeo</TableCell> {/* NOVA COLUNA */}
               <TableCell>Data de Conclusão</TableCell>
               <TableCell>Status</TableCell>
             </TableRow>
@@ -62,6 +64,7 @@ const DataTable: React.FC<DataTableProps> = ({ data }) => {
                 <TableCell>{row.video_name}</TableCell>
                 <TableCell>{row.total_duration}</TableCell>
                 <TableCell>{row.until_completed_duration}</TableCell>
+                <TableCell>{row.video_total_duration}</TableCell> {/* EXIBINDO O NOVO CAMPO */}
                 <TableCell>{row.completed_date}</TableCell>
                 <TableCell>{row.status}</TableCell>
               </TableRow>

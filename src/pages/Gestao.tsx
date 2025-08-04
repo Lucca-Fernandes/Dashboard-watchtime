@@ -1,11 +1,11 @@
 // src/pages/Gestao.tsx
-import React, { useState, useMemo } from 'react'; // 'useEffect' removido por não ser usado
+import React, { useState, useMemo } from 'react';
 import {
   Typography, Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Paper,
   CircularProgress, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText,
   FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { useData } from '../context/DataContext';
 import { predefinedTotals, courseNameMappings } from '../utils/constants';
 import { useNavigate } from 'react-router-dom';
@@ -64,7 +64,9 @@ const DashboardChart = ({ data }: { data: { agent: string; concludedStudents: nu
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="concludedStudents" fill="#5231ef" name="Alunos Concluídos" />
+          <Bar dataKey="concludedStudents" fill="#5231ef" name="Alunos Concluídos">
+            <LabelList dataKey="concludedStudents" position="top" />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </Box>
@@ -97,7 +99,9 @@ const ModuleChart = ({ data }: { data: ModuleCompletionData[] }) => {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="totalStudents" fill="#82ca9d" name="Alunos no Módulo" />
+          <Bar dataKey="totalStudents" fill="#cc0490" name="Alunos no Módulo"> {/* COR ALTERADA AQUI */}
+            <LabelList dataKey="totalStudents" position="top" />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </Box>
@@ -126,11 +130,13 @@ const DisciplineModuleChart = ({ data, moduleName }: { data: DisciplineChartData
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="discipline" angle={-45} textAnchor="end" height={80} interval={0} /> {/* Rotação para nomes longos */}
+          <XAxis dataKey="discipline" angle={-45} textAnchor="end" height={80} interval={0} />
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="concludedStudents" fill="#FF8C00" name="Alunos Concluídos" /> {/* Cor Laranja */}
+          <Bar dataKey="concludedStudents" fill="#292c37" name="Alunos Concluídos"> {/* COR ALTERADA AQUI */}
+            <LabelList dataKey="concludedStudents" position="top" />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </Box>
@@ -303,14 +309,13 @@ const Gestao: React.FC = () => {
 
     allWatchTimeData.forEach(item => {
       const normalizedCourseName = courseNameMappings[item.course_name] || item.course_name;
-      // const userEmail = item.user_email; // ERRO CORRIGIDO: 'userEmail' não é mais declarado se não usado
 
       for (const [moduleName, moduleDisciplines] of Object.entries(modules)) {
         if (moduleDisciplines.includes(normalizedCourseName)) {
           if (!studentsByModule.has(moduleName)) {
             studentsByModule.set(moduleName, new Set<string>());
           }
-          studentsByModule.get(moduleName)!.add(item.user_email); // Usando item.user_email diretamente
+          studentsByModule.get(moduleName)!.add(item.user_email);
           break;
         }
       }
@@ -385,11 +390,10 @@ const Gestao: React.FC = () => {
       return [];
     }
 
-    // ERRO CORRIGIDO: Tipagem explícita para o indexador e uso seguro de `modules`
     const disciplinesInModule = modules[selectedModuleForChart as keyof typeof modules] || [];
     const chartData: DisciplineChartData[] = [];
 
-    disciplinesInModule.forEach((discipline: string) => { // ERRO CORRIGIDO: 'discipline' tipado explicitamente como string
+    disciplinesInModule.forEach((discipline: string) => {
       const concludedCount = allDisciplineCompletionData[discipline]?.count || 0;
       chartData.push({
         discipline: discipline,
@@ -515,7 +519,7 @@ const Gestao: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {moduleDisciplines.map((discipline: string) => { // ERRO CORRIGIDO: 'discipline' tipado explicitamente como string
+                  {moduleDisciplines.map((discipline: string) => {
                     const disciplineDetails = preProcessedAgentCompletionData[selectedAgent]?.[discipline];
                     const count = disciplineDetails ? disciplineDetails.count : 0;
 

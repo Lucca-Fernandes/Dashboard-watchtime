@@ -8,7 +8,7 @@ const AppRoutes: React.FC = () => {
     <Router>
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/Gestão" element={<Gestao />} />
+        <Route path="/Gestao" element={<Gestao />} />
       </Routes>
     </Router>
   );

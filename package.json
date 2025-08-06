@@ -8,9 +8,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.5",
-    "@mui/material": "^5.15.15",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.0",
+    "@mui/material": "^5.18.0",
     "@mui/x-data-grid": "^6.19.6",
     "@mui/x-date-pickers": "^6.19.6",
     "chart.js": "^4.5.0",

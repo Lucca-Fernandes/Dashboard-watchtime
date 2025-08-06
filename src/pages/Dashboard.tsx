@@ -138,7 +138,7 @@ const Dashboard: React.FC = () => {
           </Button>
           <Button
             variant="outlined"
-            color="primary" // Alterado de "secondary" para "primary"
+            color="primary" 
             onClick={() => setShowFileUploadInput(true)}
             sx={{ width: '250px' }}
           >

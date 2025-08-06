@@ -15,7 +15,7 @@ import type { WatchTimeData } from '../types';
 // Definindo tipos para o novo formato de dados de conclusão por disciplina
 type DisciplineCompletionDetail = {
   count: number;
-  students: string[];
+  students: Set<string>;
 };
 
 type AgentCompletionResults = {
@@ -38,6 +38,20 @@ type DisciplineChartData = {
   discipline: string;
   concludedStudents: number;
 };
+
+// Função auxiliar para verificar o domínio do email
+const checkUserEmailDomain = (email: string, domainFilter: 'all' | 'pditabira' | 'pdbomdespacho'): boolean => {
+  if (domainFilter === 'all') {
+    return email.endsWith('@pditabira.com') || email.endsWith('@pdbomdespacho.com.br');
+  }
+  return email.endsWith(`@${domainFilter}.com`) || email.endsWith(`@${domainFilter}.com.br`);
+};
+
+// Função para verificar o status do aluno
+const checkStudentStatus = (status: string | undefined): boolean => {
+  return status === 'Ativo' || status === 'EmRecuperacao' || status === 'Atencao';
+};
+
 
 const DashboardChart = ({ data }: { data: { agent: string; concludedStudents: number; }[] }) => {
   if (!data || data.length === 0) {
@@ -73,7 +87,7 @@ const DashboardChart = ({ data }: { data: { agent: string; concludedStudents: nu
   );
 };
 
-// Componente para o Gráfico de Módulos
+// Componente para o Gráfico de Módulos (Total de Alunos)
 const ModuleChart = ({ data }: { data: ModuleCompletionData[] }) => {
   if (!data || data.length === 0) {
     return <Typography variant="h6">Nenhum dado disponível para o dashboard de módulos.</Typography>;
@@ -99,7 +113,7 @@ const ModuleChart = ({ data }: { data: ModuleCompletionData[] }) => {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="totalStudents" fill="#cc0490" name="Alunos no Módulo"> {/* COR ALTERADA AQUI */}
+          <Bar dataKey="totalStudents" fill="#cc0490" name="Alunos no Módulo">
             <LabelList dataKey="totalStudents" position="top" />
           </Bar>
         </BarChart>
@@ -108,7 +122,8 @@ const ModuleChart = ({ data }: { data: ModuleCompletionData[] }) => {
   );
 };
 
-// NOVO COMPONENTE: Gráfico de Disciplinas por Módulo
+
+// Componente para o Gráfico de Disciplinas por Módulo
 const DisciplineModuleChart = ({ data, moduleName }: { data: DisciplineChartData[]; moduleName: string | null }) => {
   if (!moduleName || data.length === 0) {
     return <Typography variant="h6">Selecione um módulo para ver os detalhes das disciplinas.</Typography>;
@@ -134,7 +149,7 @@ const DisciplineModuleChart = ({ data, moduleName }: { data: DisciplineChartData
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="concludedStudents" fill="#292c37" name="Alunos Concluídos"> {/* COR ALTERADA AQUI */}
+          <Bar dataKey="concludedStudents" fill="#292c37" name="Alunos Concluídos">
             <LabelList dataKey="concludedStudents" position="top" />
           </Bar>
         </BarChart>
@@ -149,6 +164,7 @@ const Gestao: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [openDisciplineStudents, setOpenDisciplineStudents] = useState<string | null>(null);
   const [selectedModuleForChart, setSelectedModuleForChart] = useState<string | null>(null);
+  const [selectedDomainFilter, setSelectedDomainFilter] = useState<'all' | 'pditabira' | 'pdbomdespacho'>('all');
   const navigate = useNavigate();
 
   const modules = useMemo(() => ({
@@ -201,7 +217,9 @@ const Gestao: React.FC = () => {
   ]), []);
 
   const agents = useMemo(() => {
-    if (!allWatchTimeData || allWatchTimeData.length === 0) return [];
+    if (!allWatchTimeData || allWatchTimeData.length === 0) {
+      return [];
+    }
     const uniqueAgents = [...new Set(allWatchTimeData.map(item => item.ags).filter(ags => ags))];
     return uniqueAgents.filter(agent => !removedAgents.includes(agent));
   }, [allWatchTimeData, removedAgents]);
@@ -215,7 +233,8 @@ const Gestao: React.FC = () => {
 
     const groupedByAgent: { [agent: string]: WatchTimeData[] } = {};
     allWatchTimeData.forEach(item => {
-      if (item.ags && agents.includes(item.ags)) {
+      // Adicionando a verificação de status aqui
+      if (item.ags && agents.includes(item.ags) && checkUserEmailDomain(item.user_email, selectedDomainFilter) && checkStudentStatus(item.status)) {
         if (!groupedByAgent[item.ags]) {
           groupedByAgent[item.ags] = [];
         }
@@ -270,23 +289,24 @@ const Gestao: React.FC = () => {
 
           agentResults[discipline] = {
             count: completedStudents.length,
-            students: completedStudents,
+            students: new Set(completedStudents),
           };
         } else {
           agentResults[discipline] = {
             count: 0,
-            students: [],
+            students: new Set(),
           };
         }
       });
       allAgentResults[agent] = agentResults;
     });
     return allAgentResults;
-  }, [allWatchTimeData, agents, disciplines, predefinedTotals, courseNameMappings, isDataLoaded]);
-
+  }, [allWatchTimeData, agents, disciplines, predefinedTotals, courseNameMappings, isDataLoaded, selectedDomainFilter]);
 
   const dashboardData = useMemo(() => {
-    if (!preProcessedAgentCompletionData) return [];
+    if (!preProcessedAgentCompletionData) {
+      return [];
+    }
     const newDashboardData = agents.map(agent => {
       const completionDetails = preProcessedAgentCompletionData[agent];
       const totalConcluded = Object.values(completionDetails).reduce((sum, detail) => sum + detail.count, 0);
@@ -299,7 +319,7 @@ const Gestao: React.FC = () => {
     return newDashboardData;
   }, [agents, preProcessedAgentCompletionData]);
 
-  // Calcular Dados de Alunos por Módulo (existente)
+  // Calcular Dados de Alunos por Módulo (todos os que assistiram alguma aula)
   const moduleData = useMemo(() => {
     if (!isDataLoaded || allWatchTimeData.length === 0) {
       return [];
@@ -308,15 +328,18 @@ const Gestao: React.FC = () => {
     const studentsByModule = new Map<string, Set<string>>();
 
     allWatchTimeData.forEach(item => {
-      const normalizedCourseName = courseNameMappings[item.course_name] || item.course_name;
+      // Adicionando a verificação de status aqui
+      if (checkUserEmailDomain(item.user_email, selectedDomainFilter) && checkStudentStatus(item.status)) {
+        const normalizedCourseName = courseNameMappings[item.course_name] || item.course_name;
 
-      for (const [moduleName, moduleDisciplines] of Object.entries(modules)) {
-        if (moduleDisciplines.includes(normalizedCourseName)) {
-          if (!studentsByModule.has(moduleName)) {
-            studentsByModule.set(moduleName, new Set<string>());
+        for (const [moduleName, moduleDisciplines] of Object.entries(modules)) {
+          if (moduleDisciplines.includes(normalizedCourseName)) {
+            if (!studentsByModule.has(moduleName)) {
+              studentsByModule.set(moduleName, new Set<string>());
+            }
+            studentsByModule.get(moduleName)!.add(item.user_email);
+            break;
           }
-          studentsByModule.get(moduleName)!.add(item.user_email);
-          break;
         }
       }
     });
@@ -329,7 +352,7 @@ const Gestao: React.FC = () => {
     chartData.sort((a, b) => a.module.localeCompare(b.module));
 
     return chartData;
-  }, [allWatchTimeData, modules, courseNameMappings, isDataLoaded]);
+  }, [allWatchTimeData, modules, courseNameMappings, isDataLoaded, selectedDomainFilter]);
 
   // Pré-processamento dos dados de conclusão por disciplina para TODOS os alunos
   const allDisciplineCompletionData = useMemo(() => {
@@ -340,23 +363,26 @@ const Gestao: React.FC = () => {
     const studentDisciplineProgress: { [email: string]: { [discipline: string]: Set<string> } } = {};
 
     allWatchTimeData.forEach(_item => {
-      const _normalizedDiscipline = courseNameMappings[_item.course_name] || _item.course_name;
-      const _userEmail = _item.user_email;
-      const _videoTotalSeconds = timeToSeconds(_item.video_total_duration);
-      const _totalSecondsWatched = timeToSeconds(_item.total_duration);
+      // Adicionando a verificação de status aqui
+      if (checkUserEmailDomain(_item.user_email, selectedDomainFilter) && checkStudentStatus(_item.status)) {
+        const _normalizedDiscipline = courseNameMappings[_item.course_name] || _item.course_name;
+        const _userEmail = _item.user_email;
+        const _videoTotalSeconds = timeToSeconds(_item.video_total_duration);
+        const _totalSecondsWatched = timeToSeconds(_item.total_duration);
 
-      const _isLessonCompletedByDuration =
-        _videoTotalSeconds > 0 &&
-        _totalSecondsWatched >= (_videoTotalSeconds * 0.8);
+        const _isLessonCompletedByDuration =
+          _videoTotalSeconds > 0 &&
+          _totalSecondsWatched >= (_videoTotalSeconds * 0.8);
 
-      if (_isLessonCompletedByDuration) {
-        if (!studentDisciplineProgress[_userEmail]) {
-          studentDisciplineProgress[_userEmail] = {};
+        if (_isLessonCompletedByDuration) {
+          if (!studentDisciplineProgress[_userEmail]) {
+            studentDisciplineProgress[_userEmail] = {};
+          }
+          if (!studentDisciplineProgress[_userEmail][_normalizedDiscipline]) {
+            studentDisciplineProgress[_userEmail][_normalizedDiscipline] = new Set();
+          }
+          studentDisciplineProgress[_userEmail][_normalizedDiscipline].add(_item.id);
         }
-        if (!studentDisciplineProgress[_userEmail][_normalizedDiscipline]) {
-          studentDisciplineProgress[_userEmail][_normalizedDiscipline] = new Set();
-        }
-        studentDisciplineProgress[_userEmail][_normalizedDiscipline].add(_item.id);
       }
     });
 
@@ -375,13 +401,13 @@ const Gestao: React.FC = () => {
       });
     });
 
-    const finalDisciplineResults: { [key: string]: { count: number; students: Set<string> } } = {};
+    const finalDisciplineResults: { [key: string]: DisciplineCompletionDetail } = {};
     Object.entries(disciplineConcludedStudents).forEach(([discipline, studentsSet]) => {
       finalDisciplineResults[discipline] = { count: studentsSet.size, students: studentsSet };
     });
 
     return finalDisciplineResults;
-  }, [allWatchTimeData, disciplines, predefinedTotals, courseNameMappings, isDataLoaded]);
+  }, [allWatchTimeData, disciplines, predefinedTotals, courseNameMappings, isDataLoaded, selectedDomainFilter]);
 
 
   // Filtrar dados para o gráfico de disciplina com base no módulo selecionado
@@ -430,11 +456,28 @@ const Gestao: React.FC = () => {
         Gestão de Agentes de Sucesso e Módulos
       </Typography>
 
+      {/* Filtro de Domínio */}
+      <FormControl fullWidth sx={{ mb: 4, mt: 2 }}>
+        <InputLabel id="domain-filter-label">Filtrar por Domínio</InputLabel>
+        <Select
+          labelId="domain-filter-label"
+          id="domain-filter-select"
+          value={selectedDomainFilter}
+          label="Filtrar por Domínio"
+          onChange={(e) => setSelectedDomainFilter(e.target.value as 'all' | 'pditabira' | 'pdbomdespacho')}
+        >
+          <MenuItem value="all">Todos os Domínios (Itabira e Bom Despacho)</MenuItem>
+          <MenuItem value="pditabira">Itabira</MenuItem>
+          <MenuItem value="pdbomdespacho">Bom Despacho</MenuItem>
+        </Select>
+      </FormControl>
+      {/* Fim Filtro de Domínio */}
+
       <DashboardChart data={dashboardData} />
 
       <ModuleChart data={moduleData} />
 
-      {/* NOVO: Filtro e Gráfico de Disciplinas por Módulo */}
+      {/* Filtro e Gráfico de Disciplinas por Módulo */}
       <Paper sx={{ p: 3, mt: 4, mb: 4 }}>
         <Typography variant="h5" gutterBottom>
           Alunos Concluídos por Disciplina (Filtrado por Módulo)
@@ -461,7 +504,7 @@ const Gestao: React.FC = () => {
 
         <DisciplineModuleChart data={filteredDisciplineChartData} moduleName={selectedModuleForChart} />
       </Paper>
-      {/* FIM NOVO: Filtro e Gráfico de Disciplinas por Módulo */}
+      {/* Fim Filtro e Gráfico de Disciplinas por Módulo */}
 
       {!selectedAgent ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -553,8 +596,8 @@ const Gestao: React.FC = () => {
           <DialogTitle>Alunos Concluídos em "{openDisciplineStudents}"</DialogTitle>
           <DialogContent dividers>
             <List dense>
-              {preProcessedAgentCompletionData[selectedAgent]?.[openDisciplineStudents]?.students.length > 0 ? (
-                preProcessedAgentCompletionData[selectedAgent][openDisciplineStudents]?.students.map((studentEmail, index) => (
+              {preProcessedAgentCompletionData[selectedAgent]?.[openDisciplineStudents]?.students.size > 0 ? (
+                Array.from(preProcessedAgentCompletionData[selectedAgent][openDisciplineStudents]?.students || []).map((studentEmail, index) => (
                   <ListItem key={index} sx={{ py: 0.5 }}>
                     <ListItemText primary={studentEmail} />
                   </ListItem>

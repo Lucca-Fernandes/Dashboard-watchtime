@@ -146,7 +146,7 @@ const Dashboard: React.FC = () => {
 
       const isLessonCompletedByDuration =
         videoTotalSeconds > 0 &&
-        totalSecondsWatched >= (videoTotalSeconds * 0.8);
+        totalSecondsWatched >= (videoTotalSeconds * 0.5);
 
       if (isLessonCompletedByDuration) {
         if (!studentCompletionMap.has(userEmail)) {
@@ -168,7 +168,7 @@ const Dashboard: React.FC = () => {
         const totalLessonsForDiscipline = predefinedTotals[normalizedDiscipline] || 0;
         const lessonsCompleted = disciplinesWatched[normalizedDiscipline]?.size || 0;
 
-        const isCompleted = totalLessonsForDiscipline > 0 && (lessonsCompleted / totalLessonsForDiscipline) >= 0.8;
+        const isCompleted = totalLessonsForDiscipline > 0 && (lessonsCompleted / totalLessonsForDiscipline) >= 0.5;
         disciplineCompletion[discipline] = isCompleted;
       });
       detailedData.push({ studentEmail, disciplineCompletion });

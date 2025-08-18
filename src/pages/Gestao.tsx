@@ -5,6 +5,7 @@ import {
   CircularProgress, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText,
   FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { useData } from '../context/DataContext';
 import { predefinedTotals, courseNameMappings } from '../utils/constants';
@@ -47,11 +48,7 @@ const checkUserEmailDomain = (email: string, domainFilter: 'all' | 'pditabira' |
   return email.endsWith(`@${domainFilter}.com`) || email.endsWith(`@${domainFilter}.com.br`);
 };
 
-// Função para verificar o status do aluno
-const checkStudentStatus = (status: string | undefined): boolean => {
-  return status === 'Ativo' || status === 'EmRecuperacao' || status === 'Atencao';
-};
-
+// A função checkStudentStatus foi removida, pois não é mais utilizada.
 
 const DashboardChart = ({ data }: { data: { agent: string; concludedStudents: number; }[] }) => {
   if (!data || data.length === 0) {
@@ -67,7 +64,7 @@ const DashboardChart = ({ data }: { data: { agent: string; concludedStudents: nu
         <BarChart
           data={data}
           margin={{
-            top: 40, // Alterado para corrigir o corte
+            top: 40,
             right: 30,
             left: 20,
             bottom: 5,
@@ -102,7 +99,7 @@ const ModuleChart = ({ data }: { data: ModuleCompletionData[] }) => {
         <BarChart
           data={data}
           margin={{
-            top: 40, // Alterado para corrigir o corte
+            top: 40,
             right: 30,
             left: 20,
             bottom: 5,
@@ -138,7 +135,7 @@ const DisciplineModuleChart = ({ data, moduleName }: { data: DisciplineChartData
         <BarChart
           data={data}
           margin={{
-            top: 40, // Alterado para corrigir o corte
+            top: 40,
             right: 30,
             left: 20,
             bottom: 5,
@@ -231,10 +228,16 @@ const Gestao: React.FC = () => {
 
     const allAgentResults: PreProcessedAgentData = {};
 
+    // INÍCIO DA ALTERAÇÃO: Filtrar os dados de acordo com os status desejados
+    const filteredData = allWatchTimeData.filter(item => {
+        const status = item.status?.trim();
+        return status === 'Ativo' || status === 'EmRecuperacao' || status === 'Atencao';
+    });
+    // FIM DA ALTERAÇÃO
+
     const groupedByAgent: { [agent: string]: WatchTimeData[] } = {};
-    allWatchTimeData.forEach(item => {
-      // Adicionando a verificação de status aqui
-      if (item.ags && agents.includes(item.ags) && checkUserEmailDomain(item.user_email, selectedDomainFilter) && checkStudentStatus(item.status)) {
+    filteredData.forEach(item => { // Alterado para usar filteredData
+      if (item.ags && agents.includes(item.ags) && checkUserEmailDomain(item.user_email, selectedDomainFilter)) {
         if (!groupedByAgent[item.ags]) {
           groupedByAgent[item.ags] = [];
         }
@@ -327,9 +330,15 @@ const Gestao: React.FC = () => {
 
     const studentsByModule = new Map<string, Set<string>>();
 
-    allWatchTimeData.forEach(item => {
-      // Adicionando a verificação de status aqui
-      if (checkUserEmailDomain(item.user_email, selectedDomainFilter) && checkStudentStatus(item.status)) {
+    // INÍCIO DA ALTERAÇÃO: Filtrar os dados de acordo com os status desejados
+    const filteredData = allWatchTimeData.filter(item => {
+        const status = item.status?.trim();
+        return status === 'Ativo' || status === 'EmRecuperacao' || status === 'Atencao';
+    });
+    // FIM DA ALTERAÇÃO
+
+    filteredData.forEach(item => { // Alterado para usar filteredData
+      if (checkUserEmailDomain(item.user_email, selectedDomainFilter)) {
         const normalizedCourseName = courseNameMappings[item.course_name] || item.course_name;
 
         for (const [moduleName, moduleDisciplines] of Object.entries(modules)) {
@@ -359,12 +368,18 @@ const Gestao: React.FC = () => {
     if (!isDataLoaded || allWatchTimeData.length === 0) {
       return null;
     }
+    
+    // INÍCIO DA ALTERAÇÃO: Filtrar os dados de acordo com os status desejados
+    const filteredData = allWatchTimeData.filter(item => {
+        const status = item.status?.trim();
+        return status === 'Ativo' || status === 'EmRecuperacao' || status === 'Atencao';
+    });
+    // FIM DA ALTERAÇÃO
 
     const studentDisciplineProgress: { [email: string]: { [discipline: string]: Set<string> } } = {};
 
-    allWatchTimeData.forEach(_item => {
-      // Adicionando a verificação de status aqui
-      if (checkUserEmailDomain(_item.user_email, selectedDomainFilter) && checkStudentStatus(_item.status)) {
+    filteredData.forEach(_item => { // Alterado para usar filteredData
+      if (checkUserEmailDomain(_item.user_email, selectedDomainFilter)) {
         const _normalizedDiscipline = courseNameMappings[_item.course_name] || _item.course_name;
         const _userEmail = _item.user_email;
         const _videoTotalSeconds = timeToSeconds(_item.video_total_duration);
@@ -372,7 +387,7 @@ const Gestao: React.FC = () => {
 
         const _isLessonCompletedByDuration =
           _videoTotalSeconds > 0 &&
-          _totalSecondsWatched >= (_videoTotalSeconds * 0.8);
+          _totalSecondsWatched >= (_videoTotalSeconds * 0.5);
 
         if (_isLessonCompletedByDuration) {
           if (!studentDisciplineProgress[_userEmail]) {
@@ -394,7 +409,7 @@ const Gestao: React.FC = () => {
         const totalLessonsForDiscipline = predefinedTotals[normalizedDiscipline] || 0;
         if (totalLessonsForDiscipline > 0) {
           const completionRate = lessonsCompleted.size / totalLessonsForDiscipline;
-          if (completionRate >= 0.8) {
+          if (completionRate >= 0.5) {
             disciplineConcludedStudents[normalizedDiscipline].add(email);
           }
         }
@@ -464,7 +479,7 @@ const Gestao: React.FC = () => {
           id="domain-filter-select"
           value={selectedDomainFilter}
           label="Filtrar por Domínio"
-          onChange={(e) => setSelectedDomainFilter(e.target.value as 'all' | 'pditabira' | 'pdbomdespacho')}
+          onChange={(e: SelectChangeEvent<string | null>) => setSelectedDomainFilter(e.target.value as 'all' | 'pditabira' | 'pdbomdespacho')}
         >
           <MenuItem value="all">Todos os Domínios (Itabira e Bom Despacho)</MenuItem>
           <MenuItem value="pditabira">Itabira</MenuItem>
@@ -489,7 +504,7 @@ const Gestao: React.FC = () => {
             id="module-select"
             value={selectedModuleForChart || ''}
             label="Selecionar Módulo"
-            onChange={(e) => setSelectedModuleForChart(e.target.value as string)}
+            onChange={(e: SelectChangeEvent<string | null>) => setSelectedModuleForChart(e.target.value)}
           >
             <MenuItem value="">
               <em>Nenhum</em>

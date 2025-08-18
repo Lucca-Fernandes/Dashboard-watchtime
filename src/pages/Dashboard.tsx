@@ -21,9 +21,7 @@ type DetailedStudentData = {
   disciplineCompletion: { [discipline: string]: boolean };
 };
 
-const checkStudentStatus = (status: string | undefined): boolean => {
-  return status === 'Ativo' || status === 'EmRecuperacao' || status === 'Atencao';
-};
+// A função checkStudentStatus foi removida, pois não é mais utilizada.
 
 const Dashboard: React.FC = () => {
   const { data, setData, isDataLoaded } = useData();
@@ -132,8 +130,9 @@ const Dashboard: React.FC = () => {
       return;
     }
 
+    // Removendo a verificação de status para incluir todos os alunos.
     const filteredByAgent = data.filter(item =>
-      item.ags?.toLowerCase() === agentEmail.toLowerCase() && checkStudentStatus(item.status)
+      item.ags?.toLowerCase() === agentEmail.toLowerCase()
     );
 
     const studentCompletionMap = new Map<string, { [discipline: string]: Set<string> }>();
@@ -168,7 +167,7 @@ const Dashboard: React.FC = () => {
         const totalLessonsForDiscipline = predefinedTotals[normalizedDiscipline] || 0;
         const lessonsCompleted = disciplinesWatched[normalizedDiscipline]?.size || 0;
 
-        const isCompleted = totalLessonsForDiscipline > 0 && (lessonsCompleted / totalLessonsForDiscipline) >= 0.5;
+        const isCompleted = totalLessonsForDiscipline > 0 && (lessonsCompleted / totalLessonsForDiscipline) >= 0.8;
         disciplineCompletion[discipline] = isCompleted;
       });
       detailedData.push({ studentEmail, disciplineCompletion });

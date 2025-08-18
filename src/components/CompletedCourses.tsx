@@ -98,7 +98,7 @@ const CompletedCourses: React.FC<{ data: WatchTimeData[] }> = ({ data }) => {
 
               const isLessonCompletedByDuration = 
                   videoTotalSeconds > 0 && // Garante que a duração total do vídeo é válida e positiva
-                  totalSecondsWatched >= (videoTotalSeconds * 0.8);
+                  totalSecondsWatched >= (videoTotalSeconds * 0.5);
               
               if (isLessonCompletedByDuration) {
                   countCompletedLessons++;

@@ -1,13 +1,10 @@
-// src/theme/Theme.ts
 import { createTheme } from '@mui/material/styles';
 
-// Define as cores
-const primaryColor = '#5231ef'; // Roxo/Azul Vibrante
-const secondaryColor = '#edf7fd'; // Azul muito claro
-
+const primaryColor = '#5231ef'; 
+const secondaryColor = '#edf7fd'; 
 const theme = createTheme({
   palette: {
-    mode: 'light', // Modo claro para o tema
+    mode: 'light', 
     primary: {
       main: primaryColor,
     },
@@ -15,45 +12,45 @@ const theme = createTheme({
       main: secondaryColor,
     },
     background: {
-      default: '#FFFFFF', // Fundo principal da página será BRANCO
-      paper: secondaryColor, // Fundo de componentes como Paper (tabelas, listas) será #edf7fd
+      default: '#FFFFFF', 
+      paper: secondaryColor, 
     },
     text: {
-      primary: '#1a1a1a', // Cor de texto padrão para melhor contraste
-      secondary: primaryColor, // Exemplo de cor secundária para textos
+      primary: '#1a1a1a', 
+      secondary: primaryColor, 
     },
   },
   typography: {
-    fontFamily: 'Roboto, sans-serif', // Exemplo de fonte
+    fontFamily: 'Roboto, sans-serif', 
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none', // Mantém o texto dos botões sem ser em caixa alta
-          borderRadius: 8, // Adiciona um leve arredondamento
+          textTransform: 'none', 
+          borderRadius: 8, 
         },
       },
     },
-    // Estilo para o Paper (usado por DataTable e CompletedCourses)
+    
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: secondaryColor, // Fundo dos cards/tabelas será #edf7fd
-          padding: '16px', // Adicionar um padding padrão para as caixas
-          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)', // Uma leve sombra para destaque
+          backgroundColor: secondaryColor, 
+          padding: '16px', 
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)', 
         },
       },
     },
-    MuiTableCell: { // Estilo para células da tabela
+    MuiTableCell: { 
       styleOverrides: {
         head: {
-          backgroundColor: primaryColor, // Fundo do cabeçalho da tabela
-          color: '#FFFFFF', // Cor do texto do cabeçalho
+          backgroundColor: primaryColor, 
+          color: '#FFFFFF', 
           fontWeight: 'bold',
         },
         body: {
-          color: '#333333', // Cor do texto do corpo da tabela
+          color: '#333333', 
         },
       },
     },

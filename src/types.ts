@@ -6,11 +6,11 @@ export interface WatchTimeData {
   lesson_name: string; 
   course_name: string;
   video_name: string; 
-  total_duration: string; // Tempo que o aluno consumiu (Ex: "01:03:37")
+  total_duration: string; 
   completed: string; 
   completed_date: string | null; 
-  until_completed_duration: string; // Adicionado com base no cabeçalho do CSV, manter como string. (Ex: "00:17:06")
-  video_total_duration: string; // NOVO CAMPO: Duração total do vídeo (Ex: "00:19:51")
+  until_completed_duration: string; 
+  video_total_duration: string; 
   created_at: string; 
   updated_at: string; 
   export_date: string; 
@@ -19,9 +19,6 @@ export interface WatchTimeData {
   ags: string; 
 }
 
-// Estes provavelmente deveriam estar em src/utils/constants.ts se forem usados em múltiplos locais.
-// Verifique onde você tem predefinedTotals e courseNameMappings definidos para evitar duplicidade.
-// Caso estejam aqui, mantenha-os. Caso contrário, remova-os e garanta que são importados de constants.ts.
 
 export const predefinedTotals: { [key: string]: number } = {
   "Banco de Dados Relacional": 35,
@@ -46,5 +43,3 @@ export const predefinedTotals: { [key: string]: number } = {
   "Projetos II": 16,
   "Programação Básica com Python": 59
 };
-// Note: courseNameMappings não está presente neste arquivo `types.ts` no seu contexto,
-// então não vou incluí-lo aqui para evitar duplicação se já estiver em `constants.ts`.

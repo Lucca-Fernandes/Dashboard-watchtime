@@ -1,10 +1,8 @@
-// src/pages/CompletedCourses.tsx
 import React, { useState, useEffect } from 'react';
 import { Typography, Box, Paper, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import type { WatchTimeData } from '../types';
-import { timeToSeconds } from '../utils/timeUtils'; // Importa a função timeToSeconds
+import { timeToSeconds } from '../utils/timeUtils'; 
 
-// Totais predefinidos de aulas por disciplina
 const predefinedTotals: { [key: string]: number } = {
   "Banco de Dados Relacional": 35,
   "Teste de Software Para Web": 22,
@@ -29,7 +27,6 @@ const predefinedTotals: { [key: string]: number } = {
   "Programação Básica com Python": 59
 };
 
-// Mapeamento de variações de nomes para nomes predefinidos
 const courseNameMappings: { [key: string]: string } = {
   "Banco de Dados": "Banco de Dados Relacional",
 };
@@ -58,13 +55,11 @@ const CompletedCourses: React.FC<{ data: WatchTimeData[] }> = ({ data }) => {
 
     const email = searchEmail.toLowerCase();
     
-    // Filtra todos os itens do aluno para processamento posterior
     const studentItems = data.filter(item => item.user_email.toLowerCase() === email);
 
     if (studentItems.length > 0) {
       const emailMap = new Map<string, { fullName: string; courses: Map<string, CourseStats> }>();
       
-      // Itera sobre todos os itens do aluno (não apenas os com completed_date, pois a lógica de conclusão mudou)
       studentItems.forEach((item) => {
         if (!emailMap.has(email)) {
           emailMap.set(email, { fullName: item.user_full_name, courses: new Map() });
@@ -72,22 +67,20 @@ const CompletedCourses: React.FC<{ data: WatchTimeData[] }> = ({ data }) => {
         const student = emailMap.get(email)!;
         const normalizedCourseName = courseNameMappings[item.course_name] || item.course_name;
         
-        // Garante que o objeto CourseStats para esta disciplina existe no mapa
         if (!student.courses.has(normalizedCourseName)) {
             student.courses.set(normalizedCourseName, {
                 courseName: normalizedCourseName,
-                completedLessons: 0, // Inicializa como 0
-                totalLessons: predefinedTotals[normalizedCourseName] || 0 // Pega o total predefinido
+                completedLessons: 0, 
+                totalLessons: predefinedTotals[normalizedCourseName] || 0 
             });
         }
       });
 
-      // Agora, recalcula completedLessons com a nova lógica
-      // Para cada disciplina do aluno, filtre os itens que satisfazem a nova lógica de conclusão
+      
       const currentStudentStats = emailMap.get(email)!;
       currentStudentStats.courses.forEach((courseStat, courseKey) => {
           let countCompletedLessons = 0;
-          // Filtra os itens do aluno para esta disciplina específica
+          
           const disciplineItems = studentItems.filter(item => 
               (courseNameMappings[item.course_name] || item.course_name) === courseKey
           );
@@ -97,14 +90,13 @@ const CompletedCourses: React.FC<{ data: WatchTimeData[] }> = ({ data }) => {
               const totalSecondsWatched = timeToSeconds(item.total_duration);
 
               const isLessonCompletedByDuration = 
-                  videoTotalSeconds > 0 && // Garante que a duração total do vídeo é válida e positiva
+                  videoTotalSeconds > 0 && 
                   totalSecondsWatched >= (videoTotalSeconds * 0.5);
               
               if (isLessonCompletedByDuration) {
                   countCompletedLessons++;
               }
           });
-          // Atualiza o número de aulas concluídas com base na nova lógica
           courseStat.completedLessons = countCompletedLessons; 
       });
 
@@ -148,7 +140,6 @@ const CompletedCourses: React.FC<{ data: WatchTimeData[] }> = ({ data }) => {
               </TableHead>
               <TableBody>
                 {studentStats.courses.map((course: CourseStats, index: number) => {
-                  // Previne divisão por zero se totalLessons for 0
                   const completionRate = course.totalLessons > 0 ? (course.completedLessons / course.totalLessons) * 100 : 0;
                   const isCompleted = completionRate >= 80 && course.completedLessons > 0;
                   return (

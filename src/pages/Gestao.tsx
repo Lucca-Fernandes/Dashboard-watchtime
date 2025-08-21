@@ -1,4 +1,3 @@
-// src/pages/Gestao.tsx
 import React, { useState, useMemo } from 'react';
 import {
   Typography, Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Paper,
@@ -13,7 +12,6 @@ import { useNavigate } from 'react-router-dom';
 import { timeToSeconds } from '../utils/timeUtils';
 import type { WatchTimeData } from '../types';
 
-// Definindo tipos para o novo formato de dados de conclusão por disciplina
 type DisciplineCompletionDetail = {
   count: number;
   students: Set<string>;
@@ -23,24 +21,21 @@ type AgentCompletionResults = {
   [discipline: string]: DisciplineCompletionDetail;
 };
 
-// Novo tipo para dados de agente pré-processados
 type PreProcessedAgentData = {
   [agentEmail: string]: AgentCompletionResults;
 };
 
-// Novo tipo para dados de módulo
 type ModuleCompletionData = {
   module: string;
   totalStudents: number;
 };
 
-// Novo tipo para dados do gráfico de disciplina por módulo
 type DisciplineChartData = {
   discipline: string;
   concludedStudents: number;
 };
 
-// Função auxiliar para verificar o domínio do email
+
 const checkUserEmailDomain = (email: string, domainFilter: 'all' | 'pditabira' | 'pdbomdespacho'): boolean => {
   if (domainFilter === 'all') {
     return email.endsWith('@pditabira.com') || email.endsWith('@pdbomdespacho.com.br');
@@ -48,7 +43,7 @@ const checkUserEmailDomain = (email: string, domainFilter: 'all' | 'pditabira' |
   return email.endsWith(`@${domainFilter}.com`) || email.endsWith(`@${domainFilter}.com.br`);
 };
 
-// A função checkStudentStatus foi removida, pois não é mais utilizada.
+
 
 const DashboardChart = ({ data }: { data: { agent: string; concludedStudents: number; }[] }) => {
   if (!data || data.length === 0) {
@@ -228,15 +223,14 @@ const Gestao: React.FC = () => {
 
     const allAgentResults: PreProcessedAgentData = {};
 
-    // INÍCIO DA ALTERAÇÃO: Filtrar os dados de acordo com os status desejados
     const filteredData = allWatchTimeData.filter(item => {
         const status = item.status?.trim();
         return status === 'Ativo' || status === 'EmRecuperacao' || status === 'Atencao';
     });
-    // FIM DA ALTERAÇÃO
+    
 
     const groupedByAgent: { [agent: string]: WatchTimeData[] } = {};
-    filteredData.forEach(item => { // Alterado para usar filteredData
+    filteredData.forEach(item => { 
       if (item.ags && agents.includes(item.ags) && checkUserEmailDomain(item.user_email, selectedDomainFilter)) {
         if (!groupedByAgent[item.ags]) {
           groupedByAgent[item.ags] = [];
@@ -330,14 +324,13 @@ const Gestao: React.FC = () => {
 
     const studentsByModule = new Map<string, Set<string>>();
 
-    // INÍCIO DA ALTERAÇÃO: Filtrar os dados de acordo com os status desejados
     const filteredData = allWatchTimeData.filter(item => {
         const status = item.status?.trim();
         return status === 'Ativo' || status === 'EmRecuperacao' || status === 'Atencao';
     });
-    // FIM DA ALTERAÇÃO
+    
 
-    filteredData.forEach(item => { // Alterado para usar filteredData
+    filteredData.forEach(item => { 
       if (checkUserEmailDomain(item.user_email, selectedDomainFilter)) {
         const normalizedCourseName = courseNameMappings[item.course_name] || item.course_name;
 
@@ -363,22 +356,19 @@ const Gestao: React.FC = () => {
     return chartData;
   }, [allWatchTimeData, modules, courseNameMappings, isDataLoaded, selectedDomainFilter]);
 
-  // Pré-processamento dos dados de conclusão por disciplina para TODOS os alunos
   const allDisciplineCompletionData = useMemo(() => {
     if (!isDataLoaded || allWatchTimeData.length === 0) {
       return null;
     }
     
-    // INÍCIO DA ALTERAÇÃO: Filtrar os dados de acordo com os status desejados
     const filteredData = allWatchTimeData.filter(item => {
         const status = item.status?.trim();
         return status === 'Ativo' || status === 'EmRecuperacao' || status === 'Atencao';
     });
-    // FIM DA ALTERAÇÃO
 
     const studentDisciplineProgress: { [email: string]: { [discipline: string]: Set<string> } } = {};
 
-    filteredData.forEach(_item => { // Alterado para usar filteredData
+    filteredData.forEach(_item => { 
       if (checkUserEmailDomain(_item.user_email, selectedDomainFilter)) {
         const _normalizedDiscipline = courseNameMappings[_item.course_name] || _item.course_name;
         const _userEmail = _item.user_email;
@@ -425,7 +415,6 @@ const Gestao: React.FC = () => {
   }, [allWatchTimeData, disciplines, predefinedTotals, courseNameMappings, isDataLoaded, selectedDomainFilter]);
 
 
-  // Filtrar dados para o gráfico de disciplina com base no módulo selecionado
   const filteredDisciplineChartData = useMemo(() => {
     if (!selectedModuleForChart || !allDisciplineCompletionData) {
       return [];

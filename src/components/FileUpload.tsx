@@ -1,11 +1,9 @@
-// src/components/FileUpload.tsx
 import React, { useState } from 'react';
 import { Button, Box, Typography, CircularProgress } from '@mui/material';
 import Papa from 'papaparse';
 import type { WatchTimeData } from '../types';
 
 interface FileUploadProps {
-  // A tipagem da prop 'onFileUpload' que aceita um array de WatchTimeData
   onFileUpload: (data: WatchTimeData[]) => void;
 }
 
@@ -30,7 +28,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
       complete: (results) => {
         try {
           const parsedData = results.data as WatchTimeData[];
-          onFileUpload(parsedData); // Chama a função passada pelo componente pai
+          onFileUpload(parsedData); 
         } catch (err: any) {
           setError('Erro ao processar o arquivo CSV. Verifique o formato.');
           console.error('Erro de parse:', err);

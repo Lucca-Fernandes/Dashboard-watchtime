@@ -1,4 +1,3 @@
-// src/pages/Dashboard.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import FileUpload from '../components/FileUpload';
 import CompletedCourses from '../components/CompletedCourses';
@@ -21,7 +20,6 @@ type DetailedStudentData = {
   disciplineCompletion: { [discipline: string]: boolean };
 };
 
-// A função checkStudentStatus foi removida, pois não é mais utilizada.
 
 const Dashboard: React.FC = () => {
   const { data, setData, isDataLoaded } = useData();
@@ -130,7 +128,6 @@ const Dashboard: React.FC = () => {
       return;
     }
 
-    // Removendo a verificação de status para incluir todos os alunos.
     const filteredByAgent = data.filter(item =>
       item.ags?.toLowerCase() === agentEmail.toLowerCase()
     );

@@ -20,6 +20,16 @@ type DetailedStudentData = {
   disciplineCompletion: { [discipline: string]: boolean };
 };
 
+interface GradeData {
+  'Usuário': string;
+  'Nota total (%)': string;
+}
+
+interface StudentGradesByDiscipline {
+  discipline: string;
+  nota: string | null;
+  status: 'Aprovado' | 'Reprovado' | 'Não Encontrado';
+}
 
 const Dashboard: React.FC = () => {
   const { data, setData, isDataLoaded } = useData();
@@ -31,6 +41,9 @@ const Dashboard: React.FC = () => {
 
   const [agentEmail, setAgentEmail] = useState<string>('');
   const [detailedAgentStudentsData, setDetailedAgentStudentsData] = useState<DetailedStudentData[] | null>(null);
+  const [gradesDataMap, setGradesDataMap] = useState<{ [discipline: string]: GradeData[] }>({});
+  const [gradeSearchEmail, setGradeSearchEmail] = useState<string>('');
+  const [studentGrades, setStudentGrades] = useState<StudentGradesByDiscipline[]>([]);
 
   const modules = useMemo(() => ({
     "Módulo 1: Fundamentos": [
@@ -68,9 +81,61 @@ const Dashboard: React.FC = () => {
 
   const disciplines = useMemo(() => Object.values(modules).flat(), [modules]);
 
+  // Lista de disciplinas e seus arquivos CSV organizados por módulos
+  const disciplineCsvMap: { [discipline: string]: string } = {
+    "Scratch": '/Modulo1/Scratch.csv',
+    "No Code": '/Modulo1/NoCode.csv',
+    "Introdução a Web": '/Modulo1/IntroducaoAWeb.csv',
+    "Linux": '/Modulo1/Linux.csv',
+    "Programação Básica com Python": '/Modulo1/ProgramacaoBasicaComPython.csv',
+    "JavaScript": '/Modulo2/JavaScript.csv',
+    "Programação Orientada a Objetos": '/Modulo2/ProgramacaoOrientadaAObjetos.csv',
+    "Programação Intermediária com Python - Python II": '/Modulo2/ProgramacaoIntermediariaComPython.csv',
+    "Banco de Dados Relacional": '/Modulo2/BancoDeDadosRelacional.csv',
+    "Fundamentos de Interface": '/Modulo3/FundamentosDeInterface.csv',
+    "Desenvolvimento de websites com mentalidade ágil": '/Modulo3/DesenvolvimentoDeWebsitesComMentalidadeAgil.csv',
+    "Desenvolvimento de Interfaces Web Frameworks Front-End": '/Modulo3/DesenvolvimentoDeInterfacesWebFrameworksFrontEnd.csv',
+    "React JS": '/Modulo3/ReactJS.csv',
+    "Programação Multiplataforma com React Native": '/Modulo3/ProgramacaoMultiplataformaComReactNative.csv',
+    "Programação Multiplataforma com Flutter": '/Modulo3/ProgramacaoMultiplataformaComFlutter.csv',
+    "Padrão de Projeto de Software": '/Modulo4/PadraoDeProjetoDeSoftware.csv',
+    "Desenvolvimento Nativo para Android": '/Modulo4/DesenvolvimentoNativoParaAndroid.csv',
+    "Desenvolvimento de APIs RESTful": '/Modulo4/DesenvolvimentoDeAPIsRESTful.csv',
+    "Teste de Software Para Web": '/Modulo4/TesteDeSoftwareParaWeb.csv',
+  };
+
   useEffect(() => {
     setFilteredData(data);
   }, [data]);
+
+  useEffect(() => {
+    // Carrega todos os CSVs de notas automaticamente
+    const loadAllGrades = async () => {
+      const loadedData: { [discipline: string]: GradeData[] } = {};
+      for (const [discipline, csvPath] of Object.entries(disciplineCsvMap)) {
+        try {
+          const response = await fetch(csvPath);
+          if (!response.ok) {
+            throw new Error(`Falha ao carregar ${csvPath}: ${response.statusText}`);
+          }
+          const csvText = await response.text();
+          const results = Papa.parse<GradeData>(csvText, {
+            header: true,
+            delimiter: ';',
+            skipEmptyLines: true,
+            transformHeader: (header) => header.trim(), // Normaliza cabeçalhos removendo espaços extras
+          });
+          // Filtrar rows válidas para evitar undefined
+          loadedData[discipline] = results.data.filter(item => item && item['Usuário'] !== undefined);
+          console.log(`CSV de ${discipline} carregado com sucesso:`, loadedData[discipline].length, 'linhas válidas');
+        } catch (error) {
+          console.error(`Erro ao carregar CSV de ${discipline}:`, error);
+        }
+      }
+      setGradesDataMap(loadedData);
+    };
+    loadAllGrades();
+  }, []);
 
   const handleLoadPredefinedCsv = async () => {
     setIsLoading(true);
@@ -120,6 +185,31 @@ const Dashboard: React.FC = () => {
     );
     setFilteredData(filtered);
     setDetailedAgentStudentsData(null);
+  };
+
+  const handleGradeSearch = () => {
+    if (!gradeSearchEmail.trim()) {
+      setStudentGrades([]);
+      return;
+    }
+
+    const username = gradeSearchEmail.split('@')[0].toLowerCase();
+    const grades: StudentGradesByDiscipline[] = [];
+
+    Object.keys(disciplineCsvMap).forEach(discipline => {
+      const disciplineData = gradesDataMap[discipline] || [];
+      const foundStudent = disciplineData.find(item => {
+        return item && typeof item['Usuário'] === 'string' && item['Usuário'].trim().toLowerCase() === username;
+      });
+      const nota = foundStudent ? foundStudent['Nota total (%)'] : null;
+      let status: 'Aprovado' | 'Reprovado' | 'Não Encontrado' = 'Não Encontrado';
+      if (nota !== null && nota.trim() !== '') {
+        status = parseFloat(nota) >= 60 ? 'Aprovado' : 'Reprovado';
+      }
+      grades.push({ discipline, nota, status });
+    });
+
+    setStudentGrades(grades);
   };
 
   const handleAgentSearch = () => {
@@ -184,7 +274,7 @@ const Dashboard: React.FC = () => {
           Dashboard Watch Time
         </Typography>
 
-        {/* Filtro de Aluno */}
+        {/* Filtro de Aluno (apenas para vídeos assistidos) */}
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <TextField
             label="Filtrar por email do aluno"
@@ -192,6 +282,19 @@ const Dashboard: React.FC = () => {
             fullWidth
             value={inputEmail}
             onChange={(e) => setInputEmail(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#757575', borderWidth: 1 },
+                '&:hover fieldset': { borderColor: '#424242' },
+                '&.Mui-focused fieldset': { borderColor: '#1976d2' },
+              },
+              '& .MuiInputLabel-outlined': {
+                color: '#757575',
+                '&.Mui-focused': { color: '#1976d2' },
+              },
+              fontSize: '1rem',
+              padding: '4px',
+            }}
           />
           <Button
             variant="contained"
@@ -202,7 +305,7 @@ const Dashboard: React.FC = () => {
           </Button>
         </Box>
 
-        {/* Novo Filtro de Agente */}
+        {/* Filtro de Agente */}
         <Box sx={{ display: 'flex', gap: 2, mb: 4, mt: 4 }}>
           <TextField
             label="Pesquisar por email do agente"
@@ -210,6 +313,19 @@ const Dashboard: React.FC = () => {
             fullWidth
             value={agentEmail}
             onChange={(e) => setAgentEmail(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#757575', borderWidth: 1 },
+                '&:hover fieldset': { borderColor: '#424242' },
+                '&.Mui-focused fieldset': { borderColor: '#1976d2' },
+              },
+              '& .MuiInputLabel-outlined': {
+                color: '#757575',
+                '&.Mui-focused': { color: '#1976d2' },
+              },
+              fontSize: '1rem',
+              padding: '4px',
+            }}
           />
           <Button
             variant="contained"
@@ -283,6 +399,79 @@ const Dashboard: React.FC = () => {
           </>
         )}
 
+        {/* Novo campo de busca para notas, no final da página */}
+        <Paper sx={{ p: 3, mt: 4, mb: 4 }}>
+          <Typography variant="h5" gutterBottom>
+            Notas e Aprovação por Disciplina
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <TextField
+              label="Buscar por email para notas"
+              variant="outlined"
+              fullWidth
+              value={gradeSearchEmail}
+              onChange={(e) => setGradeSearchEmail(e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: '#757575', borderWidth: 1 },
+                  '&:hover fieldset': { borderColor: '#424242' },
+                  '&.Mui-focused fieldset': { borderColor: '#1976d2' },
+                },
+                '& .MuiInputLabel-outlined': {
+                  color: '#757575',
+                  '&.Mui-focused': { color: '#1976d2' },
+                },
+                fontSize: '1rem',
+                padding: '4px',
+              }}
+            />
+            <Button
+              variant="contained"
+              onClick={handleGradeSearch}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              Buscar Notas
+            </Button>
+          </Box>
+          {gradeSearchEmail.trim() !== '' && (
+            <Box sx={{ mt: 2 }}>
+              {studentGrades.length > 0 ? (
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Disciplina</TableCell>
+                      <TableCell>Nota Total (%)</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {studentGrades.map((grade, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{grade.discipline}</TableCell>
+                        <TableCell>{grade.nota || 'N/A'}</TableCell>
+                        <TableCell>
+                          {grade.status === 'Aprovado' ? (
+                            <Chip icon={<CheckIcon />} label="Aprovado" color="success" variant="outlined" />
+                          ) : grade.status === 'Reprovado' ? (
+                            <Chip icon={<CloseIcon />} label="Reprovado" color="error" variant="outlined" />
+                          ) : (
+                            <Chip label="Não Encontrado" color="default" variant="outlined" />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Typography sx={{ mt: 2 }}>
+                  Nenhum dado de notas encontrado para este email.
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Paper>
+
+        {/* Botão Gestão de Agentes como último elemento */}
         <Button
           variant="contained"
           sx={{ mt: 2 }}
@@ -326,7 +515,6 @@ const Dashboard: React.FC = () => {
             sx={{ width: '250px' }}
           >
             Carregar Novo CSV
-          
           </Button>
         </Box>
       )}

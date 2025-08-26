@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import FileUpload from '../components/FileUpload';
 import CompletedCourses from '../components/CompletedCourses';
 import DataTable from '../components/DataTable';
 import {
   Typography, Box, TextField, Button, CircularProgress,
-  Table, TableBody, TableCell, TableHead, TableRow, Paper, Chip
+  Table, TableBody, TableCell, TableHead, TableRow, Paper, Chip, Stack
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -47,41 +47,21 @@ const Dashboard: React.FC = () => {
 
   const modules = useMemo(() => ({
     "Módulo 1: Fundamentos": [
-      "Scratch",
-      "No Code",
-      "Introdução a Web",
-      "Linux",
-      "Programação Básica com Python"
+      "Scratch", "No Code", "Introdução a Web", "Linux", "Programação Básica com Python"
     ],
     "Módulo 2: Backend e Dados": [
-      "JavaScript",
-      "Programação Orientada a Objetos",
-      "Programação Intermediária com Python - Python II",
-      "Banco de Dados Relacional"
+      "JavaScript", "Programação Orientada a Objetos", "Programação Intermediária com Python - Python II", "Banco de Dados Relacional"
     ],
     "Módulo 3: Frontend e Mobile": [
-      "Fundamentos de Interface",
-      "Desenvolvimento de websites com mentalidade ágil",
-      "Desenvolvimento de Interfaces Web Frameworks Front-End",
-      "React JS",
-      "Programação Multiplataforma com React Native",
-      "Programação Multiplataforma com Flutter"
+      "Fundamentos de Interface", "Desenvolvimento de websites com mentalidade ágil", "Desenvolvimento de Interfaces Web Frameworks Front-End", "React JS", "Programação Multiplataforma com React Native", "Programação Multiplataforma com Flutter"
     ],
     "Módulo 4: Avançado e Ferramentas": [
-      "Padrão de Projeto de Software",
-      "Desenvolvimento Nativo para Android",
-      "Desenvolvimento de APIs RESTful",
-      "Teste de Software Para Web"
+      "Padrão de Projeto de Software", "Desenvolvimento Nativo para Android", "Desenvolvimento de APIs RESTful", "Teste de Software Para Web"
     ],
-    "Projetos e Outros": [
-      "Projetos II",
-      "Tutorial Plataforma"
-    ]
   }), []);
 
   const disciplines = useMemo(() => Object.values(modules).flat(), [modules]);
 
-  // Lista de disciplinas e seus arquivos CSV organizados por módulos
   const disciplineCsvMap: { [discipline: string]: string } = {
     "Scratch": '/Modulo1/Scratch.csv',
     "No Code": '/Modulo1/NoCode.csv',
@@ -109,7 +89,6 @@ const Dashboard: React.FC = () => {
   }, [data]);
 
   useEffect(() => {
-    // Carrega todos os CSVs de notas automaticamente
     const loadAllGrades = async () => {
       const loadedData: { [discipline: string]: GradeData[] } = {};
       for (const [discipline, csvPath] of Object.entries(disciplineCsvMap)) {
@@ -123,11 +102,9 @@ const Dashboard: React.FC = () => {
             header: true,
             delimiter: ';',
             skipEmptyLines: true,
-            transformHeader: (header) => header.trim(), // Normaliza cabeçalhos removendo espaços extras
+            transformHeader: (header) => header.trim(),
           });
-          // Filtrar rows válidas para evitar undefined
           loadedData[discipline] = results.data.filter(item => item && item['Usuário'] !== undefined);
-          console.log(`CSV de ${discipline} carregado com sucesso:`, loadedData[discipline].length, 'linhas válidas');
         } catch (error) {
           console.error(`Erro ao carregar CSV de ${discipline}:`, error);
         }
@@ -142,7 +119,6 @@ const Dashboard: React.FC = () => {
     try {
       const response = await fetch('/relatorio_watchtime_padrao.csv');
       const csvText = await response.text();
-
       Papa.parse(csvText, {
         header: true,
         delimiter: ';',
@@ -192,23 +168,20 @@ const Dashboard: React.FC = () => {
       setStudentGrades([]);
       return;
     }
-
     const username = gradeSearchEmail.split('@')[0].toLowerCase();
     const grades: StudentGradesByDiscipline[] = [];
-
     Object.keys(disciplineCsvMap).forEach(discipline => {
       const disciplineData = gradesDataMap[discipline] || [];
-      const foundStudent = disciplineData.find(item => {
-        return item && typeof item['Usuário'] === 'string' && item['Usuário'].trim().toLowerCase() === username;
-      });
+      const foundStudent = disciplineData.find(item => 
+        item && typeof item['Usuário'] === 'string' && item['Usuário'].trim().toLowerCase() === username
+      );
       const nota = foundStudent ? foundStudent['Nota total (%)'] : null;
       let status: 'Aprovado' | 'Reprovado' | 'Não Encontrado' = 'Não Encontrado';
       if (nota !== null && nota.trim() !== '') {
-        status = parseFloat(nota) >= 60 ? 'Aprovado' : 'Reprovado';
+        status = parseFloat(nota.replace(',', '.')) >= 60 ? 'Aprovado' : 'Reprovado';
       }
       grades.push({ discipline, nota, status });
     });
-
     setStudentGrades(grades);
   };
 
@@ -217,49 +190,55 @@ const Dashboard: React.FC = () => {
       setDetailedAgentStudentsData(null);
       return;
     }
-
+  
     const filteredByAgent = data.filter(item =>
       item.ags?.toLowerCase() === agentEmail.toLowerCase()
     );
-
-    const studentCompletionMap = new Map<string, { [discipline: string]: Set<string> }>();
-
-    filteredByAgent.forEach(item => {
-      const userEmail = item.user_email;
-      const normalizedDiscipline = courseNameMappings[item.course_name] || item.course_name;
-      const videoTotalSeconds = timeToSeconds(item.video_total_duration);
-      const totalSecondsWatched = timeToSeconds(item.total_duration);
-
-      const isLessonCompletedByDuration =
-        videoTotalSeconds > 0 &&
-        totalSecondsWatched >= (videoTotalSeconds * 0.5);
-
-      if (isLessonCompletedByDuration) {
-        if (!studentCompletionMap.has(userEmail)) {
-          studentCompletionMap.set(userEmail, {});
-        }
-        const studentProgress = studentCompletionMap.get(userEmail)!;
-        if (!studentProgress[normalizedDiscipline]) {
-          studentProgress[normalizedDiscipline] = new Set();
-        }
-        studentProgress[normalizedDiscipline].add(item.id);
-      }
-    });
-
+  
+    const allAgentStudents = new Set<string>(filteredByAgent.map(item => item.user_email));
+    
     const detailedData: DetailedStudentData[] = [];
-    studentCompletionMap.forEach((disciplinesWatched, studentEmail) => {
+  
+    allAgentStudents.forEach(studentEmail => {
       const disciplineCompletion: { [key: string]: boolean } = {};
+      const studentUsername = studentEmail.split('@')[0].toLowerCase();
+      const studentWatchData = filteredByAgent.filter(item => item.user_email === studentEmail);
+  
       disciplines.forEach(discipline => {
         const normalizedDiscipline = courseNameMappings[discipline] || discipline;
         const totalLessonsForDiscipline = predefinedTotals[normalizedDiscipline] || 0;
-        const lessonsCompleted = disciplinesWatched[normalizedDiscipline]?.size || 0;
-
-        const isCompleted = totalLessonsForDiscipline > 0 && (lessonsCompleted / totalLessonsForDiscipline) >= 0.8;
-        disciplineCompletion[discipline] = isCompleted;
+        
+        const watchedLessons = new Set<string>();
+        studentWatchData
+          .filter(item => (courseNameMappings[item.course_name] || item.course_name) === normalizedDiscipline)
+          .forEach(item => {
+            const videoTotalSeconds = timeToSeconds(item.video_total_duration);
+            const totalSecondsWatched = timeToSeconds(item.total_duration);
+            if (videoTotalSeconds > 0 && totalSecondsWatched >= (videoTotalSeconds * 0.5)) {
+              watchedLessons.add(item.id);
+            }
+          });
+  
+        const isCompletedByWatchTime = totalLessonsForDiscipline > 0 && (watchedLessons.size / totalLessonsForDiscipline) >= 0.8;
+  
+        const gradeData = gradesDataMap[discipline] || [];
+        const studentGradeInfo = gradeData.find(item => 
+          item && typeof item['Usuário'] === 'string' && item['Usuário'].trim().toLowerCase() === studentUsername
+        );
+        let isCompletedByGrade = false;
+        if (studentGradeInfo && studentGradeInfo['Nota total (%)']) {
+          const nota = parseFloat(studentGradeInfo['Nota total (%)'].replace(',', '.'));
+          if (!isNaN(nota) && nota >= 60) {
+            isCompletedByGrade = true;
+          }
+        }
+  
+        disciplineCompletion[discipline] = isCompletedByWatchTime || isCompletedByGrade;
       });
+  
       detailedData.push({ studentEmail, disciplineCompletion });
     });
-
+  
     setDetailedAgentStudentsData(detailedData);
   };
 
@@ -274,7 +253,6 @@ const Dashboard: React.FC = () => {
           Dashboard Watch Time
         </Typography>
 
-        {/* Filtro de Aluno (apenas para vídeos assistidos) */}
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <TextField
             label="Filtrar por email do aluno"
@@ -282,19 +260,6 @@ const Dashboard: React.FC = () => {
             fullWidth
             value={inputEmail}
             onChange={(e) => setInputEmail(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#757575', borderWidth: 1 },
-                '&:hover fieldset': { borderColor: '#424242' },
-                '&.Mui-focused fieldset': { borderColor: '#1976d2' },
-              },
-              '& .MuiInputLabel-outlined': {
-                color: '#757575',
-                '&.Mui-focused': { color: '#1976d2' },
-              },
-              fontSize: '1rem',
-              padding: '4px',
-            }}
           />
           <Button
             variant="contained"
@@ -305,7 +270,6 @@ const Dashboard: React.FC = () => {
           </Button>
         </Box>
 
-        {/* Filtro de Agente */}
         <Box sx={{ display: 'flex', gap: 2, mb: 4, mt: 4 }}>
           <TextField
             label="Pesquisar por email do agente"
@@ -313,19 +277,6 @@ const Dashboard: React.FC = () => {
             fullWidth
             value={agentEmail}
             onChange={(e) => setAgentEmail(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#757575', borderWidth: 1 },
-                '&:hover fieldset': { borderColor: '#424242' },
-                '&.Mui-focused fieldset': { borderColor: '#1976d2' },
-              },
-              '& .MuiInputLabel-outlined': {
-                color: '#757575',
-                '&.Mui-focused': { color: '#1976d2' },
-              },
-              fontSize: '1rem',
-              padding: '4px',
-            }}
           />
           <Button
             variant="contained"
@@ -345,7 +296,7 @@ const Dashboard: React.FC = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ minWidth: 200, fontWeight: 'bold' }}>Aluno</TableCell>
+                    <TableCell sx={{ minWidth: 350, fontWeight: 'bold' }}>Aluno</TableCell>
                     {disciplines.map(discipline => (
                       <TableCell key={discipline} sx={{ minWidth: 100, fontWeight: 'bold', textAlign: 'center' }}>
                         {discipline}
@@ -355,32 +306,60 @@ const Dashboard: React.FC = () => {
                 </TableHead>
                 <TableBody>
                   {detailedAgentStudentsData.length > 0 ? (
-                    detailedAgentStudentsData.map((studentData, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{studentData.studentEmail}</TableCell>
-                        {disciplines.map(discipline => (
-                          <TableCell key={discipline} align="center">
-                            {studentData.disciplineCompletion[discipline] ? (
-                              <Chip
-                                icon={<CheckIcon />}
-                                label="Concluído"
-                                color="success"
-                                variant="outlined"
-                                size="small"
-                              />
-                            ) : (
-                              <Chip
-                                icon={<CloseIcon />}
-                                label="Pendente"
-                                color="error"
-                                variant="outlined"
-                                size="small"
-                              />
-                            )}
+                    detailedAgentStudentsData.map((studentData, index) => {
+                      const completedCount = Object.values(studentData.disciplineCompletion).filter(Boolean).length;
+                      const pendingCount = disciplines.length - completedCount;
+
+                      return (
+                        <TableRow key={index}>
+                          <TableCell>
+                            {/* ** ALTERAÇÃO DE ESTILO APLICADA AQUI ** */}
+                            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                              <Typography variant="body2" component="span" sx={{ whiteSpace: 'nowrap' }}>
+                                {studentData.studentEmail}
+                              </Typography>
+                              <Stack direction="row" spacing={0.5}>
+                                <Chip
+                                  icon={<CheckIcon sx={{ fontSize: '1rem' }} />}
+                                  label={completedCount}
+                                  color="success"
+                                  size="small"
+                                  sx={{ height: '22px', fontSize: '0.7rem' }}
+                                />
+                                <Chip
+                                  icon={<CloseIcon sx={{ fontSize: '1rem' }} />}
+                                  label={pendingCount}
+                                  color="error"
+                                  size="small"
+                                  sx={{ height: '22px', fontSize: '0.7rem' }}
+                                />
+                              </Stack>
+                            </Stack>
                           </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
+                          {disciplines.map(discipline => (
+                            <TableCell key={discipline} align="center">
+                              {studentData.disciplineCompletion[discipline] ? (
+                                <Chip
+                                  icon={<CheckIcon />}
+                                  label="Concluído"
+                                  color="success"
+                                  variant="outlined"
+                                  size="small"
+                                />
+                              ) : (
+                                <Chip
+                                  icon={<CloseIcon />}
+                                  label="Pendente"
+                                  color="error"
+                                  variant="outlined"
+                                  size="small"
+                                />
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={disciplines.length + 1} align="center">
@@ -399,7 +378,6 @@ const Dashboard: React.FC = () => {
           </>
         )}
 
-        {/* Novo campo de busca para notas, no final da página */}
         <Paper sx={{ p: 3, mt: 4, mb: 4 }}>
           <Typography variant="h5" gutterBottom>
             Notas e Aprovação por Disciplina
@@ -411,19 +389,6 @@ const Dashboard: React.FC = () => {
               fullWidth
               value={gradeSearchEmail}
               onChange={(e) => setGradeSearchEmail(e.target.value)}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: '#757575', borderWidth: 1 },
-                  '&:hover fieldset': { borderColor: '#424242' },
-                  '&.Mui-focused fieldset': { borderColor: '#1976d2' },
-                },
-                '& .MuiInputLabel-outlined': {
-                  color: '#757575',
-                  '&.Mui-focused': { color: '#1976d2' },
-                },
-                fontSize: '1rem',
-                padding: '4px',
-              }}
             />
             <Button
               variant="contained"
@@ -471,7 +436,6 @@ const Dashboard: React.FC = () => {
           )}
         </Paper>
 
-        {/* Botão Gestão de Agentes como último elemento */}
         <Button
           variant="contained"
           sx={{ mt: 2 }}

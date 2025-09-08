@@ -82,6 +82,7 @@ const Dashboard: React.FC = () => {
     "Desenvolvimento Nativo para Android": '/Modulo4/DesenvolvimentoNativoParaAndroid.csv',
     "Desenvolvimento de APIs RESTful": '/Modulo4/DesenvolvimentoDeAPIsRESTful.csv',
     "Teste de Software Para Web": '/Modulo4/TesteDeSoftwareParaWeb.csv',
+    "Teste de Software Para Mobile": '/Modulo4/TesteDeSoftwareParaMobile.csv',
   };
 
   useEffect(() => {

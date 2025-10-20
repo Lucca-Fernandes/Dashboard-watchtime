@@ -58,9 +58,9 @@ henrique.queiroz;;;100.00;100.00;100.00;100.00;100.00
 henrique.silva;;;100.00;100.00;100.00;100.00;100.00
 hiago.ambrosio;;;0.00;0.00;0.00;0.00;0.00
 igor.alves;;;100.00;100.00;100.00;100.00;100.00
-indianara.guia;;;100.00;100.00;100.00;100.00;100.00
+indianara.guia;Indianara dos Santos Rodrigues Guia;;100.00;100.00;100.00;100.00;100.00
 ingrid.oliveira;;;0.00;0.00;0.00;0.00;0.00
-isabela.teixeira;;;100.00;100.00;100.00;100.00;100.00
+isabela.teixeira;Isabela Maria de Sa Teixeira;;100.00;100.00;100.00;100.00;100.00
 isabelle.novais;;;100.00;100.00;100.00;100.00;100.00
 izolina.neta;;;0.00;0.00;0.00;0.00;0.00
 jean.basilio;;;100.00;100.00;100.00;100.00;100.00
@@ -212,7 +212,7 @@ lucas.siqueira;;;100.00;100.00;0.00;0.00;50.00
 luis.vargas;;;0.00;0.00;0.00;0.00;0.00
 luiz.gomes;Luiz Guilherme Gomes;;100.00;100.00;100.00;0.00;75.00
 manasses.dias;;;0.00;0.00;0.00;0.00;0.00
-marcio.ferreira;;;100.00;100.00;80.00;60.00;85.00
+marcio.ferreira;Marcio Paulo Cardoso Ferreira;;100.00;100.00;80.00;60.00;85.00
 marcos.ferreira;;;100.00;100.00;100.00;30.00;83.00
 maria.mendes;;;0.00;0.00;0.00;0.00;0.00
 mario.neto;;;0.00;0.00;0.00;0.00;0.00
@@ -221,7 +221,7 @@ matheus.meireles;;;0.00;0.00;0.00;0.00;0.00
 matheus.rodrigues;;;80.00;100.00;100.00;100.00;95.00
 pedro.victor;;;0.00;0.00;0.00;0.00;0.00
 pollyane.sousa;;;0.00;100.00;0.00;0.00;25.00
-rafael.macieira;;;0.00;0.00;0.00;0.00;0.00
+rafael.macieira;;;0.00;100.00;0.00;0.00;25.00
 rafael.oliveira;;;100.00;100.00;100.00;100.00;100.00
 rafaela.lopes;;;0.00;0.00;0.00;0.00;0.00
 ray.coelho;;;0.00;0.00;0.00;0.00;0.00
@@ -418,7 +418,7 @@ aline_silva;Aline Anicio Da Silva;;0.00;100.00;0.00;0.00;25.00
 aleticia_paula;;;100.00;100.00;100.00;100.00;100.00
 ana_melo;;;100.00;0.00;100.00;60.00;65.00
 larissa_lopes;;;100.00;100.00;80.00;100.00;95.00
-daniel_siqueira;;;0.00;0.00;0.00;0.00;0.00
+daniel_siqueira;Daniel Calixto Siqueira;;0.00;0.00;0.00;0.00;0.00
 diana_dias;;;60.00;89.00;100.00;100.00;87.00
 debora_cruz;;;100.00;89.00;100.00;100.00;97.00
 mikael_silva;;;0.00;78.00;0.00;0.00;20.00
@@ -465,7 +465,7 @@ saymara_souza;;;100.00;100.00;80.00;100.00;95.00
 lucas_teixeira;;;100.00;100.00;0.00;0.00;50.00
 iasmin_amaral;;;100.00;100.00;100.00;100.00;100.00
 edinilsa_moreira;;;30.00;100.00;100.00;100.00;83.00
-cristina_trindade;;;0.00;100.00;100.00;0.00;50.00
+cristina_trindade;;;0.00;100.00;100.00;60.00;65.00
 nilta_araujo;NILTA CLESIA DANTAS DE ARAUJO;;0.00;0.00;0.00;0.00;0.00
 cibely_ribeiro;;;100.00;100.00;0.00;0.00;50.00
 thainara_rosa;;;100.00;100.00;0.00;0.00;50.00
@@ -546,7 +546,7 @@ brunocosta_pdbd202;Bruno Donizete Costa;;0.00;0.00;0.00;0.00;0.00
 brunoalmeida_pdbd249;;;100.00;100.00;100.00;100.00;100.00
 cainaborges_pdbd229;CAINA WAGNER COSTA BORGES;;100.00;100.00;100.00;0.00;75.00
 ceciliasimoes_pdbd209;;;100.00;67.00;100.00;100.00;92.00
-cristhiansantos_pdbd221;;;100.00;0.00;0.00;0.00;25.00
+cristhiansantos_pdbd221;;;100.00;67.00;0.00;0.00;42.00
 denisferreira_pdbd226;;;0.00;0.00;0.00;0.00;0.00
 deryckxavier_pdbd198;;;80.00;100.00;0.00;0.00;45.00
 diegosouza_pdbd191;DIEGO FERREIRA SOUZA;;40.00;100.00;100.00;100.00;85.00
@@ -586,7 +586,7 @@ pedro_matos;;;0.00;100.00;0.00;0.00;25.00
 perryvictor_pdbd228;;;0.00;100.00;0.00;0.00;25.00
 rafaelakeyse_pdbd217;;;40.00;100.00;100.00;100.00;85.00
 rayane_melo;;;100.00;78.00;100.00;80.00;90.00
-renato_assis;;;100.00;89.00;0.00;0.00;47.00
+renato_assis;;;100.00;89.00;0.00;30.00;55.00
 ricardoresende_pdbd216;;;100.00;100.00;100.00;100.00;100.00
 sinara_silva;;;0.00;100.00;80.00;0.00;45.00
 suelenedvina_pdbd218;;;0.00;100.00;30.00;30.00;40.00
@@ -717,11 +717,11 @@ eduardo_franca;;;0.00;0.00;0.00;0.00;0.00
 victoralves_silvapdita943;;;100.00;100.00;100.00;80.00;95.00
 alessandrocassemiro_pdita944;;;0.00;0.00;0.00;0.00;0.00
 arlemrobson_crispimpdita945;;;80.00;89.00;100.00;0.00;67.00
-vilmar_costa;;;100.00;100.00;100.00;0.00;75.00
+vilmar_costa;;;100.00;100.00;100.00;80.00;95.00
 benicio_santos;;;0.00;0.00;0.00;0.00;0.00
 gabriel_cavalcante;;;0.00;0.00;0.00;0.00;0.00
 vitoriacristina_vieirapdita947;;;100.00;100.00;0.00;10.00;53.00
-acaciomagalhaes_limapdita948;;;0.00;0.00;0.00;0.00;0.00
+acaciomagalhaes_limapdita948;;;0.00;100.00;0.00;0.00;25.00
 josenildo_monteiropdita949;;;80.00;78.00;10.00;40.00;52.00
 geovancarlos_silvapdita950;;;0.00;89.00;100.00;100.00;72.00
 alexiayasmim_rosapdita951;;;100.00;89.00;30.00;40.00;65.00
@@ -761,4 +761,7 @@ manuellamel_pirespdbd263;;;0.00;100.00;30.00;30.00;40.00
 hermes_juniorpdbd264;;;100.00;100.00;0.00;0.00;50.00
 joel_silvapdita971;;;0.00;78.00;0.00;0.00;20.00
 henrique_caio93;;;0.00;0.00;0.00;0.00;0.00
-jose_franciscomedori;;;0.00;0.00;0.00;0.00;0.00
+jose_franciscomedori;;;80.00;89.00;0.00;0.00;42.00
+guilherme_ribeiropdbd265;;;0.00;100.00;0.00;0.00;25.00
+gisele_santospdbd266;;;0.00;0.00;0.00;0.00;0.00
+analaura_madeirapdbd267;;;0.00;0.00;0.00;0.00;0.00

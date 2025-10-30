@@ -118,7 +118,7 @@ const Dashboard: React.FC = () => {
   const handleLoadPredefinedCsv = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('../../public/relatorio_watchtime_padrao.csv');
+      const response = await fetch('./relatorio_watchtime_padrao.csv');
       const csvText = await response.text();
       Papa.parse(csvText, {
         header: true,
